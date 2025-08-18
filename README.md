@@ -54,7 +54,7 @@ conda env create -f environment_notebook.yml
 conda activate .venv_notebook
 ```
 
-**Step 3: Render & Preview Notebook**
+### Step 3: Render & Preview Notebook
 To render and preview the Notebook `Notebook.qmd` yourself, install [Quarto](https://quarto.org/docs/get-started/)
 ```bash
 quarto render Notebook.qmd
