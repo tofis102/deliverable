@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0">
+  <info>
+    <title>Minimal APA</title>
+    <id>http://www.zotero.org/styles/minimal-apa</id>
+    <link href="http://www.zotero.org/styles/apa" rel="self"/>
+    <author>
+      <name>Custom Quarto Example</name>
+    </author>
+    <category citation-format="author-date"/>
+    <updated>2025-08-17T00:00:00+00:00</updated>
+  </info>
+
+  <!-- Bibliography layout -->
+  <bibliography>
+    <layout prefix="" suffix=".">
+      <text variable="author" suffix=". "/>
+      <text variable="title" font-style="italic" suffix=". "/>
+      <text variable="container-title" suffix=", "/>
+      <text variable="volume" prefix="" suffix=", "/>
+      <text variable="page" prefix="pp. " suffix=". "/>
+      <text variable="issued" prefix="(" suffix=")."/>
+    </layout>
+  </bibliography>
+
+  <!-- Citation layout -->
+  <citation>
+    <layout prefix="(" suffix=")" delimiter="; ">
+      <text variable="author"/>
+      <text variable="issued" prefix=", "/>
+    </layout>
+  </citation>
+</style>

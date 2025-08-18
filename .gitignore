@@ -1,0 +1,35 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+*.pyo
+
+# --- Environments ---
+.venv/
+.venv_notebook/
+venv/
+env/
+interviews/
+interviewsenv/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*.ipynb~
+
+# --- Quarto / RMarkdown ---
+*.html
+*.pdf
+*.docx
+*.quarto_ipynb
+_cache/
+*.log
+
+# --- VSCode / IDEs ---
+.vscode/
+.idea/
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
