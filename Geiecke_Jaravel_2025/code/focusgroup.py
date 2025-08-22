@@ -6,6 +6,10 @@ import os               # Imports os for file and directory operations.
 import requests         # Ollama API uses HTTP requests
 import re    # Regular expressions for pattern matching
 import json  # JSON parsing and serialization
+import sys   # Ensures Streamlit can handle utf-8 unicode
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+
 
 
 # =====================
@@ -14,7 +18,7 @@ import json  # JSON parsing and serialization
 # Put this parameter on "ON" iff you want to see the prompts and the responses of the AIs in the Streamlit App.
 # This might be helpful for writing the prompts.
 # For instance, you can directly observe who the invisible moderator selects as next speaker.
-DEBUGGING = True   # If you want to turn debugging off, set equal to "True". If you want to activate debugging, set equal to "False" (boolean variable).
+DEBUGGING = False   # If you want to turn debugging off, set equal to "True". If you want to activate debugging, set equal to "False" (boolean variable).
 
 
 # ===========================================
@@ -28,23 +32,44 @@ HUMAN_ACTIVATION = False
 # ====== CONFIG / SETUP ====
 # ==========================
 # AI model
-MODEL = "gpt-5"  # or any other Open AI or Ollama ("gemma3") model (Geiecke & Jaravel (2025) use: "gpt-4o-2024-05-13"). Now also "gpt-5" works.
+MODEL = "gpt-5"  # or any other Open AI or Ollama ("gemma3") model 
 
-# The 'equivalent', smaller, more cost-efficient model is: "gpt-4o-mini-2024-07-18" (though reasoning is limited and therefore the transistions by the invisible moderator work rarely)
-
+# This can be run with many different OpenAI models which sometimes work better or worse (dependent for what purpose they were built).
+# The best models are likely: "gpt-5-chat-latest" (better than "gpt-5" since this is the general model and not optimized for natural conversations) and "gpt-4o-2024-05-13" (for instance, used by Geiecke & Jaravel (2025)).
+# The 'equivalent', smaller, more cost-efficient model is: "gpt-4o-mini-2024-07-18" (though reasoning is limited and therefore the transistions by the invisible moderator work rarely/almost never).
 # If you want to use an Open AI key, you have to enter your key under 'secrets.toml' (folder: '.streamlit').
 
-# We tried to do this with "gemma3" as Ollama model. But it seems that the reasoning capacities of this model are not good enough.
+# We tried to do this with "gemma3" as Ollama model. But it seems like that the reasoning capacities of this model are not good enough.
 # Especially the invisible moderator prompt often leads to not sensible results.
+
+# Note that dependent on whether a reasoning model of OpenAI is used or not, the relevant token restriction is either '"max_output_tokens": MAX_OUTPUT_TOKENS' (no reasoning model) or '"max_completion_tokens": MAX_OUTPUT_TOKENS' (reasoning model)
+# Therefore the correct token parameter has to be chosen based on the model (better check for each model that is not explicitly listed here what the correct paramter is).
+# If the chosen token parameter is wrong you will get an error message.
+
+# Maximum of output tokens for AI responses
+MAX_OUTPUT_TOKENS = None   # Don't set this value too low. Otherwise you will receive an error message as the message can not be completed.
+# Correct token parameter
+def token_kwargs(model: str, max_out: int) -> dict:
+    # GPT-5 family → max_output_tokens
+    if model.startswith("gpt-5"):
+        return {"max_completion_tokens": max_out}
+
+    # Others
+    else:
+        return {"max_tokens": max_out}
+
+token_params = token_kwargs(MODEL, MAX_OUTPUT_TOKENS)
 
 
 # Temperature of the AI model (None is default value)
-TEMPERATURE_AI_PART = None # AI participants
-TEMPERATURE_INV_MOD = 0.1 # Invisible moderator
-TEMPERATURE_VIS_MOD = None # Visible moderator
-
-# Maximum of output tokens for AI responses
-MAX_OUTPUT_TOKENS = 400
+if MODEL == "gpt-5": # Model only has the default temperature
+    TEMPERATURE_AI_PART = 1 # AI participants
+    TEMPERATURE_INV_MOD = 1 # Invisible moderator
+    TEMPERATURE_VIS_MOD = 1 # Visible moderator
+else:
+    TEMPERATURE_AI_PART = None # AI participants
+    TEMPERATURE_INV_MOD = 0.1 # Invisible moderator
+    TEMPERATURE_VIS_MOD = None # Visible moderator
 
 # Display login screen with usernames and simple passwords for studies
 LOGINS = False
@@ -79,12 +104,12 @@ OVERALL_DURATION = "60 minutes"
 FOCUS_GROUP_OUTLINE = f"""
 AI-Led Focus Group Outline — Employees Case
 
-Part 0 – Welcome, Introduction, Housekeeping & Orientation (7.5 min)
+Part 0 – Welcome, Introduction, Housekeeping & Orientation
 - Moderator welcomes participants, introduces him/herself, discussion rules (housekeeping), the topic and its motivation, 
   gives a brief overview about the discussion guide and discussion duration, and invites participants to introduce themselves and how they relate to the topic.
 - Participants introduce themselves and, if at all, comment briefly on how they feel related to the topic.
 
-Part 1 - Knowledge & Awareness about Sitting Behavior (15 min)
+Part 1 - Knowledge & Awareness about Sitting Behavior
 - Moderator shares information on risks of too much sitting and statistics on the effect of working from home on humans' sitting behavior with participants:
     - High levels of sitting are associated with:
         - Increased risk of all-cause cardiovascular disease and cancer mortatility
@@ -96,18 +121,18 @@ Part 1 - Knowledge & Awareness about Sitting Behavior (15 min)
 - Moderator asks participants about their knowledge, awareness, and opinion on this information.
 - Participants share opinions/thoughts/experiences and may discuss.(Moderator non-actively steers the discussion and may ask clarifying questions, or try to deepen the discussion).
 
-Part 2 - Current Sitting Behavior of Participants & Influences (15 min)
+Part 2 - Current Sitting Behavior of Participants & Influences
 - Moderator asks participants to share their sitting behavior, whether they sit more or less than before working in the office, and what influences this.
 - Participants share opinions/thoughts/experiences and may discuss.(Moderator non-actively steers the discussion and may ask clarifying questions, or try to deepen the discussion).
 
-Part 3 - Ideas/Solutions to Improve Sitting Behavior (15 min)
+Part 3 - Ideas/Solutions to Improve Sitting Behavior
 - Moderator asks participants for ideas to break up sitting behavior:
     - Is there anything you can think of that would be a good idea for breaking up sitting - even if you haven't already tried it out yourself? [moderator shall mention this question in the question that transition to this part of the topic guide]
     - There are some ideas that have been identified to work in a regular office environment to improve sitting behavior (education about sitting behavior and the health consequences, regular prompts, personal/individual feedback on sitting behavior).
       How do participants think they would work at home? [Moderator asks this as a Deepening question but does not use this to transition from the last part to this part of the discussion guide.]
 - Participants share opinions/thoughts/experiences and may discuss.(Moderator non-actively steers the discussion and may ask clarifying questions, or try to deepen the discussion).
 
-Part 4 - Wrap-Up, Feedback & Goodbye (7.5 min)
+Part 4 - Wrap-Up, Feedback & Goodbye
 - Moderator recaps/summarises focus group discussion in own words, thanks for participation, and asks for feedback
 - If all participants, who wanted, provided feedback, the moderator concludes the discussion.
 """
@@ -169,13 +194,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Amelia would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Amelia would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     },
 
@@ -192,13 +217,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Noah would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Noah would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     },
 
@@ -215,13 +240,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Mia would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes a short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Mia would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     },
 
@@ -238,13 +263,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Oliver would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes a short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Oliver would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     },
 
@@ -261,13 +286,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Harper would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes a short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Harper would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     },
 
@@ -284,13 +309,13 @@ You are participating in an online focus group on '{TOPIC}' and motivated by COV
 Here is the ongoing conversation so far:
 {{chat_history}}
 
-Now, respond naturally as Lucy would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes a short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
+Respond as Lucy would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
                 """
     }
 
@@ -303,22 +328,22 @@ if HUMAN_ACTIVATION != True:
         "name": "Ethan",
         "avatar": "🤖",
         "prompt": f"""
-You are Ethan (32, Germany), a computer scientist at SAP. 
-You’re attentive and curious, often picking up subtle details in everyday routines that others might overlook, such as someone stretching at their desk.
+You are Ethan, a 32-year-old computer scientist from Germany working at SAP. 
+You are attentive and curious, often noticing subtle details, like someone stretching at their desk—things others might not pick up on.
 
-You are participating in an online focus group on '{TOPIC}' and motivated by COVID lockdowns having led to new ways of working. 
+You’re participating in an online focus group about '{TOPIC}', motivated by the experience of finding new ways of working due to COVID lockdowns.
 
-Here is the ongoing conversation so far:
+Here's the discussion so far:
 {{chat_history}}
 
-Now, respond naturally as Ethan would in this setting. Only create one message, and do NOT hallucinate a whole focus group discussion between all the participants.
-Always speak in the first person, react to the most recent discussion, answer not in parantheses (""),
-do not start your introduction with "Hi/Hey erveyone,..." or your sentences always with "I...",
-and do not repeat earlier messages verbatim or start with your own or another participant’s name.
-
-Choose the length of your comments in a natural way. For instance, sometimes a short statement of consent is appropriate. 
-If you have very deep thoughts your answers might be longer. Try to keep it to maximal 3-4 concise lines for most of your comments.
-        """
+Respond as Ethan would, contributing naturally to the current conversation. Generate your message with an individual, natural sentence structure that is distinct from other agents using this prompt structure. Create only one message per turn, without generating dialogue for other participants. 
+Speak in the first person, react to the latest comment, and avoid putting statements in parentheses. 
+Do not begin your introduction with the same greetings structure as the others (e.g., “Hi/Hey everyone...”) or your reply with repetitive sentence starters (like always beginning with “I...”). 
+Also, refrain from repeating your or others’ names or repeating previous messages verbatim.
+Vary the length and style of your contributions so your responses feel authentic and unique compared to other agents. 
+Short responses may be appropriate for simple agreement, while deeper topics can justify longer—yet concise—replies. 
+Most comments should be a maximum of 3–4 concise lines. Use diverse sentence structures and phrasing to further ensure your responses are distinct and engaging.
+       """
     }
 
 # Map participant names to their dictionary keys
@@ -537,13 +562,14 @@ invisible_moderator = {
     "name": "Invisible Moderator",
     "avatar": "👤",
     "prompt": f"""
-You are the Invisible Moderator of an online focus group. Your role is to silently observe the conversation and decide who should speak and induce the transition to the next part of the discussion outline based on the elapsed time and some general rules explained below.
+You are the Invisible Moderator of an online focus group, silently observing and selecting the next speaker, or transitioning to the next discussion part as appropriate. Base decisions on elapsed time, discussion rules, and participation.
 
+## Context
 - Topic: {TOPIC}
 
 - Discussion Guide/Outline: 
   {FOCUS_GROUP_OUTLINE}
-
+  
 - Participants: {ALL_VISIBLE_PARTICIPANTS}
 
 - Note: In case, you read 'You' as a participant's name this refers to a participant, not yourself.
@@ -552,7 +578,7 @@ You are the Invisible Moderator of an online focus group. Your role is to silent
 
 - The focus group is motivated by the COVID lockdown leading to new ways of working.
 
-## Conversation Context
+## Conversation State
 
 Chat history:
 
@@ -560,53 +586,48 @@ Chat history:
 {{chat_history}}
 *****************************************************************************************************************************************************
 
-Speaking time (minutes) per participant:
+Speaking time by participant (minutes): {{speaking_time}}
 
-{{speaking_time}}
+Elapsed time: {{time_spent}} minutes
 
-Elapsed time:
-
-{{time_spent}} minutes
-
-For your orientation, right now the conversation is on Part {{transition_count}} of the discussion guide. This implies that there have been {{transition_count}} so far.
+Current discussion part of discussion guide: {{transition_count}} 
 
 
-## Guidance on choosing the next speaker
+## Guidelines for choosing the next speaker:
 
 Follow these priorities and considerations, but allow some flexibility to ensure natural, engaging conversation flow:
 
-1. If the chat history is empty or no moderator message has appeared yet, it is time for the moderator to open the session:
+1. If the chat history is empty or no moderator message has appeared yet:
 
    Return: `Moderator ({NAME_MODERATOR})_prompt_introduction`
 
    Note that this is the only case where to return this prompt.
 
-2. Never pick the same speaker (e.g., moderator) twice in a row, to keep the conversation balanced and dynamic.
+2. Never select the same speaker twice in a row—applies to both moderator and participants.
 
-3. Strive for balanced participation: give preference to those who have spoken less or less recently. Include the speaking time and the planned duration ({OVERALL_DURATION}) of the focus group in your decision process.
-   Everyone should have more or less a similar speaking time. This rule does not apply to the moderator! The moderator speks when it is necessary.
+3. Prefer participants who have spoken less or less recently. Aim for even speaking time; minor 2–3 min differences are acceptable. Moderator only speaks when needed.
 
-4. Consider topical continuity: pick someone likely to contribute meaningfully to the most recent points.
+4. Prioritize topical continuity; select the participant best positioned to address the most recent point.
 
-5. If the conversation has drifted off topic or needs refocusing, the moderator can gently steer it back:
+5. If the conversation has drifted off-topic or needs refocusing, the moderator can gently steer it back:
 
    Return: `Moderator ({NAME_MODERATOR})_prompt_topical_continuity`
 
-6. If a participant’s last message is unclear or ambiguous, the moderator should ask a clarifying question:
+6. If a participant's last input is unclear:
 
    Return: `Moderator ({NAME_MODERATOR})_prompt_claryfying_question`
 
-7. If a participant raises an idea worth exploring more deeply, the moderator can encourage elaboration:
+7. If an idea requires deepening:
 
    Return: `Moderator ({NAME_MODERATOR})_prompt_topic_deepening`
 
-8. If a participant was directly addressed by name or pronoun recently, it is natural to pick that participant next.
+8. If a participant was just directly addressed, pick them next.
 
-9. If the discussion is near its end, time is running out, interest is waning, and especially if participants write legally or ethically problematic content the moderator should close the session: 
+9. If discussion is ending, time is almost up, interest is waning, and especially if participants write legally or ethically problematic content: 
 
     Return: `Moderator ({NAME_MODERATOR})_prompt_closing_statement`
 
-10. If the moderator would be the next speaker to ensure a natural conversation flow, but none of the above rules applies:
+10. If moderator is next for natural flow and no above rule applies:
 
     Return: `Moderator ({NAME_MODERATOR})_prompt_general`
 
@@ -630,6 +651,7 @@ Follow these priorities and considerations, but allow some flexibility to ensure
   - Moderator ({NAME_MODERATOR})_prompt_topical_continuity
 
   - Moderator ({NAME_MODERATOR})_prompt_general
+
 
 ## Important Instructions
 
@@ -662,19 +684,23 @@ Follow these priorities and considerations, but allow some flexibility to ensure
 6. **Timing and transitions**  
    - Always keep track of elapsed time: {{time_spent}} minutes.  
    - Recall the focus group is in part {{transition_count}} right now.
-   - Each part of the discussion has a target transition time and a hard cut-off:
+   - Each part of the discussion guide has a target transition time. ENSURE the TRANSITIONS ARE MADE AT THE RIGHT TIME and the FOCUS GROUP ENDS EXACTLY AFTER 60 MINUTES:
      - Part 0 (intro) → immediately transition to Part 1 if everyone has responded to the moderator's first message by introducing themselves once. Don't allow that participants react with a second message to othe rparticipants' comments in Part 0 (Intro). 
-     - Part 1 → transition to Part 2 after approx 22.5 minutes the focus group has been running (latest: 26 minutes)
-     - Part 2 → transition to Part 3 after approx. 37.5 minutes the focus group has been running (latest: 41 minutes)
-     - Part 3 → transition to Part 4 after approx. 52.5 minutes the focus group has been running (latest: 56 minutes)
-     - Part 4 (final) → close the session at ~60 minutes. Do not exceed {OVERALL_DURATION} + 5 minutes.  
-   - When the current part appears complete (bullet points addressed and everyone participated) **or** the elapsed time reaches the cut-off, you must transition with:  
+     - Part 1 → transition to Part 2 when the **elapsed time** amounts to **21-23 minutes**.
+     - Part 2 → transition to Part 3 when the **elapsed time** amounts to **38-40 minutes**.
+     - Part 3 → transition to Part 4 when the **elapsed time** amounts to **55-57 minutes**.
+     - Part 4 (final) → close the focus group session when the **elapsed time** amounts to **60 minutes**.
+   - Don't finish early, i.e., several minutes before the elapsed time amounts to 60 minutes, unless participants actively say that they don't know what they could contribute anymore. 
+   -  Only transition when the elapsed time window for this part is reached (e.g., Part 1 ends at 20–25 minutes) or you really have the feeling that no partcipant could add anything new to the part (in particular, if they say that they do not know what to add anymore), you must transition with:  
      `Moderator ({NAME_MODERATOR})_prompt_transition`  
    - At the end (Part 4), close with:  
      `Moderator ({NAME_MODERATOR})_prompt_closing_statement`  
    - Do not end earlier unless participants misbehave.
 
 Especially follow 5. **Speaker restriction rule** and 6. **Timing and transitions**  to decide when to select the moderator and not a participant!
+Most importantly, Participants may (and should) speak multiple times in each part, except in the introduction round (Part 0). Do not transition simply because everyone has spoken once.
+The focus group must last exactly 60 minutes unless participants explicitly say they have nothing more to add or misbehave. Do not end early, even if all discussion guide bullet points have been covered. 
+In case "You" is a participant, you must select "You" to give him the opprtunity to give feedback before you conclude the discussion. You do not necessarily have to give this option to all other participants.
 """
 }
 
@@ -748,70 +774,44 @@ def check_password():
 
 # Check if interview transcript/time file exists which signals that interview was completed.
 def check_if_focusgroup_completed(directory, username):
-    """Check if focus group transcript/time file exists which signals that interview was completed."""
-
-    # Test account has multiple interview attempts
-    if username != "testaccount":
-
-        # Check if file exists
-        try:
-            with open(os.path.join(directory, f"{username}.txt"), "r") as _:
-                return True
-
-        except FileNotFoundError:
-            return False
-
+    """
+    Check if any focus group transcript file exists that starts with the username.
+    Special case: always return False for username == "testaccount".
+    """
+    if username == "testaccount":
+        return False
     else:
-
+        for fname in os.listdir(directory):
+            if fname.startswith(username):
+                return True
         return False
 
 # Save focusgroup data (transcript and time) to disk.
 # This function writes the chat transcript and timing information to specified directories.
-def get_unique_filename(directory, base_name, extension):
-    """Return a unique filename in the directory by appending a number if needed."""
-    filename = f"{base_name}{extension}"
-    counter = 1
-    while os.path.exists(os.path.join(directory, filename)):
-        filename = f"{base_name}_{counter}{extension}"
-        counter += 1
-    return filename
-
 def save_focusgroup_data(
-    username,
-    transcripts_directory,
-    times_directory,
-    file_name_addition_transcript="",
-    file_name_addition_time="",
+    transcript_path,
+    transcript_full_path,
+    time_path
 ):
-    """Write focus group data (transcript and time) to disk with unique filenames."""
+    """Save focus group data to fixed paths (overwrites existing files)."""
 
-    # --- Store chat transcript (with output of the invisible moderator) ---
-    transcript_file = get_unique_filename(
-        transcripts_directory, f"{username}{file_name_addition_transcript}", ".txt"
-    )
-    with open(os.path.join(transcripts_directory, transcript_file), "w") as t:
+    # --- Chat transcript ---
+    with open(transcript_path, "w", encoding="utf-8") as t:
         for message in st.session_state.messages:
             t.write(f"{message['role']}: {message['content']}\n")
 
-    # --- Store full chat transcript (with invisible moderator messages) ---
-    transcript_full_file = get_unique_filename(
-        transcripts_directory, f"{username}{file_name_addition_transcript}_with_inv_mod", ".txt"
-    )
-    with open(os.path.join(transcripts_directory, transcript_full_file), "w") as t:
+    # --- Full transcript with invisible moderator ---
+    with open(transcript_full_path, "w", encoding="utf-8") as t:
         for message in st.session_state.messages_full:
             t.write(f"{message['role']}: {message['content']}\n")
 
-    # --- Store file with start time and duration of interview ---
-    time_file = get_unique_filename(
-        times_directory, f"{username}{file_name_addition_time}", ".txt"
-    )
-    with open(os.path.join(times_directory, time_file), "w") as d:
+    # --- Timing information ---
+    with open(time_path, "w", encoding="utf-8") as d:
         duration = (time.time() - st.session_state.start_time) / 60
         d.write(
             f"Start time (UTC): {time.strftime('%d/%m/%Y %H:%M:%S', time.localtime(st.session_state.start_time))}\n"
             f"Interview duration (minutes): {duration:.2f}"
         )
-
 
 # ===========================
 # ====== SET TITLE PAGE =====
@@ -823,7 +823,8 @@ st.set_page_config(page_title="AI-led Focus Group", page_icon="🎤")
 st.title("🎤 AI-led Focus Group — Working from Home")
 
 # Short info text in an info box
-st.info(
+if HUMAN_ACTIVATION == True:
+    st.info(
     "💡 **Welcome to the online focus group!**\n\n"
     "You are one of several participants in this discussion.\n\n"
     "You can send a message **only** when the system selects you to speak — "
@@ -831,7 +832,7 @@ st.info(
     "Please read what others have shared, and feel free to respond to their points "
     "or introduce your own ideas.\n\n" 
     "To make the start of the focus group easier, please introduce yourself with your name and occupation in your first message.\n\n" 
-    "Please do not share any legally or ethically problematic content. Otherwise the focus group will end immediately."
+    "Please do not share any legally or ethically problematic content. Otherwise the focus group will end immediately. "
     "You can always end the conversation by clicking on the 'Quit' button."
 )
 
@@ -901,13 +902,13 @@ else:
 # =================================================================
 # ====== CHECK WHETHER FOCUS GROUP HAS ALREADY BEEEN COMPLETED =====
 # =================================================================
-# Check if the interview was already completed for this user.
-interview_previously_completed = check_if_focusgroup_completed(
+# Check if the focus group has already been completed for this user.
+focusgroup_previously_completed = check_if_focusgroup_completed(
     TIMES_DIRECTORY, st.session_state.username
 )
 
-# If interview was completed and no messages are present, mark as inactive.
-if interview_previously_completed and not st.session_state.messages:
+# If focus group has been completed and no messages are present, mark as inactive.
+if focusgroup_previously_completed and not st.session_state.messages:
     st.session_state.interview_active = False
     completed_message = "Focus group already completed."
     st.markdown(completed_message)  # Display completion message.
@@ -954,6 +955,35 @@ for message in st.session_state.messages[1:]:
 # ===== FOCUS GROUP LOOP =====
 # ============================
 
+# Define file names for backup files
+if "backups_paths" not in st.session_state:
+
+    if HUMAN_ACTIVATION == True:
+        base = f"{st.session_state.username}_{MODEL}_HUMAN_{st.session_state.start_time_file_names}"
+    else: 
+        base = f"{st.session_state.username}_{MODEL}_NO_HUMAN_{st.session_state.start_time_file_names}"
+
+    st.session_state.backups_paths = {
+        "transcript": os.path.join(BACKUPS_DIRECTORY, f"{base}.txt"),
+        "transcript_full": os.path.join(BACKUPS_DIRECTORY, f"{base}_with_inv_mod.txt"),
+        "time": os.path.join(BACKUPS_DIRECTORY, f"{base}_time.txt"),
+    }
+
+# Define file names for final transcripts
+if "transcript_paths" not in st.session_state:
+
+    if HUMAN_ACTIVATION == True:
+        base = f"{st.session_state.username}_{MODEL}_HUMAN_{st.session_state.start_time_file_names}"
+    else: 
+        base = f"{st.session_state.username}_{MODEL}_NO_HUMAN_{st.session_state.start_time_file_names}"
+
+    st.session_state.transcript_paths = {
+        "transcript": os.path.join(TRANSCRIPTS_DIRECTORY, f"{base}.txt"),
+        "transcript_full": os.path.join(TRANSCRIPTS_DIRECTORY, f"{base}_with_inv_mod.txt"),
+        "time": os.path.join(TIMES_DIRECTORY, f"{base}_time.txt"),
+    }
+
+
 if st.session_state.interview_active:
 
     # Take time to build the website. Don't start immediately with the website:
@@ -962,7 +992,7 @@ if st.session_state.interview_active:
     while st.session_state.interview_active:
 
         # Add break to keep the token rate per minute low enough
-        time.sleep(10)
+        time.sleep(6)
 
         # === 1. Build current chat context ===
 
@@ -1030,7 +1060,7 @@ if st.session_state.interview_active:
                 model=MODEL,
                 messages=[{"role": "system", "content": inv_filled}],
                 temperature=TEMPERATURE_INV_MOD,
-                max_tokens=MAX_OUTPUT_TOKENS
+                **token_params
             )
             next_speaker = response.choices[0].message.content.strip()
 
@@ -1101,7 +1131,7 @@ if st.session_state.interview_active:
                     model=MODEL,
                     messages=[{"role": "user", "content": prompt_text}],
                     temperature=TEMPERATURE_AI_PART,
-                    max_tokens=MAX_OUTPUT_TOKENS
+                    **token_params
                 )
                 ai_msg = response_ai.choices[0].message.content.strip()
 
@@ -1164,7 +1194,7 @@ if st.session_state.interview_active:
                     model=MODEL,
                     messages=[{"role": "assistant", "content": prompt_text}],
                     temperature=TEMPERATURE_VIS_MOD,
-                    max_tokens=MAX_OUTPUT_TOKENS
+                    **token_params
                 )
                 vis_msg = response_vis.choices[0].message.content.strip()
 
@@ -1205,11 +1235,9 @@ if st.session_state.interview_active:
                     # Save progress as backup, ignore errors.
                     try:
                         save_focusgroup_data(
-                        username=st.session_state.username,
-                        transcripts_directory=BACKUPS_DIRECTORY,
-                        times_directory=BACKUPS_DIRECTORY,
-                        file_name_addition_transcript=f"_transcript_started_{st.session_state.start_time_file_names}",
-                        file_name_addition_time=f"_time_started_{st.session_state.start_time_file_names}",
+                        st.session_state.backups_paths["transcript"],
+                        st.session_state.backups_paths["transcript_full"],
+                        st.session_state.backups_paths["time"],
                         )
                     except:
                         pass
@@ -1228,17 +1256,24 @@ if st.session_state.interview_active:
                     st.session_state.messages_full.append({"role": "Moderator", "content": closing_text})
                     
                     # Save final transcript and timing data, retry until successful.
-                    final_transcript_stored = False
-                    while final_transcript_stored == False:
+                    if st.session_state.username.strip().lower() == "testaccount":
                         save_focusgroup_data(
-                            username=st.session_state.username,
-                            transcripts_directory=TRANSCRIPTS_DIRECTORY,
-                            times_directory=TIMES_DIRECTORY,
+                            st.session_state.transcript_paths["transcript"],
+                            st.session_state.transcript_paths["transcript_full"],
+                            st.session_state.transcript_paths["time"],
                         )
-                        final_transcript_stored = check_if_focusgroup_completed(
+                    else: 
+                        final_transcript_stored = False
+                        while final_transcript_stored == False:
+                            save_focusgroup_data(
+                                st.session_state.transcript_paths["transcript"],
+                                st.session_state.transcript_paths["transcript_full"],
+                                st.session_state.transcript_paths["time"],
+                            )
+                            final_transcript_stored = check_if_focusgroup_completed(
                             TRANSCRIPTS_DIRECTORY, st.session_state.username
-                        )
-                        time.sleep(0.1)
+                            )
+                    time.sleep(0.1)
                     break
                     
 

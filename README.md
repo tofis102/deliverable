@@ -1,4 +1,4 @@
-# Code for AI-Led Qualitative Interviews and Focus Groups (with AI and Human Participants)
+# Code for AI-led Qualitative Interviews and Focus Groups (with AI and Human Participants)
 
 ## Repository Summary
 
@@ -19,7 +19,7 @@ Option 2 is the main contribution, extending the AI interview to a focus group. 
 
 ### Further Information Is Provided via the Notebook
 
-**This `README.md` is a pre-stage guide to `Notebook.qmd`, which situates the extension in the literature, provides step-by-step instructions for interviews and focus groups, explains code decisions, shares limitations, explores usage and extensions, and analyzes AI focus groups qualitatively.**
+**This `README.md` is a pre-stage guide to `Notebook.qmd`, which situates the extension in the literature, provides step-by-step instructions for interviews and focus groups, explains coding decisions, shares limitations, explores usage and extensions, and analyzes AI focus groups qualitatively.**
 
 ## Clone GitHub Repository & Environment Setup
 
@@ -56,7 +56,7 @@ conda activate .venv_notebook
 
 ### Step 3: Render & Preview Notebook
 To render and preview the Notebook `Notebook.qmd` yourself, install [Quarto](https://quarto.org/docs/get-started/)
-```bash
+```powershell
 quarto render Notebook.qmd
 quarto preview Notebook.qmd
 ```
