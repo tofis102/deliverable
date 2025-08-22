@@ -1,0 +1,35 @@
+digraph focus_group {
+	rankdir=TB splines=ortho
+	node [fontname=Helvetica fontsize=10 shape=box style="filled,rounded"]
+	prompts [label="Update prompts
+(static + dynamic placeholders)" fillcolor="#ffffcc"]
+	invisible_prompt [label="Invisible moderator is prompted
+to select next speaker" fillcolor="#cce5ff"]
+	next_speaker [label="Invisible moderator returns next speaker" fillcolor="#cce5ff"]
+	ai_agent [label="Next speaker = AI Agent" fillcolor="#dddddd"]
+	visible_mod [label="AI Agent = Visible Moderator" fillcolor="#f4cccc"]
+	mod_logic [label="Moderation logic:
+Intro, Clarifying, Transition,
+Continuity, Deepening, Conclusion, General" fillcolor=white style=dashed]
+	conclusion [label="Conclusion prompt → Visible Moderator concludes
+Transcripts saved & Session ends" fillcolor="#d9ead3"]
+	continue_discussion [label="Non-conclusion prompt → Visible Moderator speaks" fillcolor="#f4cccc"]
+	ai_participant [label="AI Agent = Participant" fillcolor="#f6b26b"]
+	human [label="Next speaker = Human Participant
+→ Human enters chat message" fillcolor="#f6b26b"]
+	display [label="Display next speaker's response
+in chat window" fillcolor="#dddddd"]
+	prompts -> invisible_prompt
+	invisible_prompt -> next_speaker
+	next_speaker -> ai_agent
+	next_speaker -> human
+	ai_agent -> visible_mod [label="If Visible Moderator"]
+	ai_agent -> ai_participant [label="If Participant"]
+	visible_mod -> mod_logic
+	mod_logic -> conclusion [label="If Conclusion Prompt"]
+	mod_logic -> continue_discussion [label=Else]
+	continue_discussion -> display
+	ai_participant -> display
+	human -> display
+	display -> prompts [label=Loop]
+}

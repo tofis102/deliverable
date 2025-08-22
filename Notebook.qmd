@@ -28,7 +28,6 @@ format:
          \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
          \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
 
-
   html:
     title: "AI-powered Qualitative Interviews and Focus Groups"
     subtitle: "prepared for the course 'Data Science, Machine Learning, and AI' held by Prof. Thiemo Fetzer"
@@ -119,6 +118,11 @@ You can try the *AI-led qualitative interview* designed by @geiecke_jaravel_2025
 You can try the *AI-powered focus group* **without** a *human participant* [here](https://focusgroup.streamlit.app/).
 
 You can try the *AI-powered focus group* **with** a *human participant* [here](https://focusgroup-human.streamlit.app/).
+
+  **Note:** It can happen that the apps are set in standby modus. Then you are asked to reactivate them by clicking on a button. This may take a minute. If the website is building this typically can also take up to a minute.
+
+  There is also the option to activate login credentials so that every participant can be identified. I haven't done this
+  here.
 
 These examples are running using my API keys. If you encounter any issues, such as the examples not working because the API key has run out of credits, please contact me at `s72tfisc@uni-bonn.de`. However, there should be enough credits for at least 30 trys so that this is unlikely to occur.
 
@@ -485,6 +489,7 @@ Further, the AI agents' prompts rely on two types of **placeholders**:
     -   Each participant’s speaking time\
     -   The specific part of the discussion guide currently being addressed
 
+:::{.content-visible when-format="gfm"}
 ```{mermaid}
 %%| label: fig-logic 
 %%| fig-cap: "Focus Group Logic"
@@ -531,6 +536,119 @@ classDef dashed stroke-dasharray: 5 5;
 classDef green fill:#d9ead3,stroke:#333,stroke-width:1px;
 classDef orange fill:#f6b26b,stroke:#333,stroke-width:1px;
 ```
+
+:::
+
+:::{.content-visible when-format="html"}
+```{mermaid}
+%%| label: fig-logic 
+%%| fig-cap: "Focus Group Logic"
+%%| fig-align: center
+%%| fig-width: 5
+%%| echo: true
+flowchart TB
+    prompts["Update prompts (static + dynamic placeholders)"]:::yellow
+    invisible_prompt["Invisible moderator is prompted to select next speaker"]:::blue
+    next_speaker["Invisible moderator returns next speaker"]:::blue
+    ai_agent{"Next speaker = AI Agent"}:::grey
+    visible_mod["AI Agent = Visible Moderator"]:::red
+    mod_logic["Moderation logic: Intro, Clarifying question, Topic transition, Continuity, Deepening, Conclusion, General"]:::dashed
+    conclusion["Conclusion prompt → Visible Moderator concludes
+Transcripts saved & Session ends"]:::green
+    continue_discussion["Non-conclusion prompt → Visible Moderator speaks"]:::red
+    ai_participant["AI Agent = Participant"]:::orange
+    human["Next speaker = Human Participant
+→ Human enters chat message"]:::orange
+    display["Display next speaker's response in chat window"]:::grey
+
+    prompts --> invisible_prompt
+    invisible_prompt --> next_speaker
+    next_speaker --> ai_agent
+    next_speaker --> human
+
+    ai_agent -->|If Visible Moderator| visible_mod
+    ai_agent -->|If Participant| ai_participant
+
+    visible_mod --> mod_logic
+    mod_logic -->|If Conclusion Prompt| conclusion
+    mod_logic -->|Else| continue_discussion
+
+    continue_discussion --> display
+    ai_participant --> display
+    human --> display
+    display -->|Loop| prompts
+
+classDef yellow fill:#ffffcc,stroke:#333,stroke-width:1px;
+classDef blue fill:#cce5ff,stroke:#333,stroke-width:1px;
+classDef grey fill:#ddd,stroke:#333,stroke-width:1px;
+classDef red fill:#f4cccc,stroke:#333,stroke-width:1px;
+classDef dashed stroke-dasharray: 5 5;
+classDef green fill:#d9ead3,stroke:#333,stroke-width:1px;
+classDef orange fill:#f6b26b,stroke:#333,stroke-width:1px;
+```
+
+:::
+
+:::{.content-visible when-format="pdf"}
+```{mermaid}
+%%| label: fig-logic 
+%%| fig-cap: "Focus Group Logic"
+%%| fig-align: center
+%%| fig-width: 5
+%%| echo: true
+flowchart TB
+    prompts["Update prompts (static + dynamic placeholders)"]:::yellow
+    invisible_prompt["Invisible moderator is prompted to select next speaker"]:::blue
+    next_speaker["Invisible moderator returns next speaker"]:::blue
+    ai_agent{"Next speaker = AI Agent"}:::grey
+    visible_mod["AI Agent = Visible Moderator"]:::red
+    mod_logic["Moderation logic: Intro, Clarifying question, Topic transition, Continuity, Deepening, Conclusion, General"]:::dashed
+    conclusion["Conclusion prompt → Visible Moderator concludes
+Transcripts saved & Session ends"]:::green
+    continue_discussion["Non-conclusion prompt → Visible Moderator speaks"]:::red
+    ai_participant["AI Agent = Participant"]:::orange
+    human["Next speaker = Human Participant
+→ Human enters chat message"]:::orange
+    display["Display next speaker's response in chat window"]:::grey
+
+    prompts --> invisible_prompt
+    invisible_prompt --> next_speaker
+    next_speaker --> ai_agent
+    next_speaker --> human
+
+    ai_agent -->|If Visible Moderator| visible_mod
+    ai_agent -->|If Participant| ai_participant
+
+    visible_mod --> mod_logic
+    mod_logic -->|If Conclusion Prompt| conclusion
+    mod_logic -->|Else| continue_discussion
+
+    continue_discussion --> display
+    ai_participant --> display
+    human --> display
+    display -->|Loop| prompts
+
+classDef yellow fill:#ffffcc,stroke:#333,stroke-width:1px;
+classDef blue fill:#cce5ff,stroke:#333,stroke-width:1px;
+classDef grey fill:#ddd,stroke:#333,stroke-width:1px;
+classDef red fill:#f4cccc,stroke:#333,stroke-width:1px;
+classDef dashed stroke-dasharray: 5 5;
+classDef green fill:#d9ead3,stroke:#333,stroke-width:1px;
+classDef orange fill:#f6b26b,stroke:#333,stroke-width:1px;
+```
+
+:::
+
+::: {.content-visible when-format="ipynb"}
+```{python}
+from IPython.display import Image
+
+# For a PNG (alternative)
+display(Image("fig_logic.png"))
+```
+:::
+
+
 
 @fig-logic illustrates the logic of the AI focus group. For more specific information on the various AI agents and their prompts see the following subsections. In contrast to @geiecke_jaravel_2025 who share the prompts in a separate `code/config.py`, the focus groups' prompt are alongside the loop logic directly embedded in `code/focusgroup.py`.
 
@@ -870,17 +988,17 @@ Since this deliverable represents only a minimal working example of an AI or hyb
 -   **Temperature and Model Variations:**\
     Varying the temperature setting across AI participants could simulate different personalities, making some more subjective, skeptical, or prone to conspiracy thinking, while others remain more neutral. This would allow the study of polarization dynamics in focus groups. It would also be useful to test which LLMs perform best in the invisible moderator role, since it requires strong analytical reasoning, and whether different temperature settings improve reliability.
 
-# Evaluation {#sec-evaluation}
+## Evaluation {#sec-evaluation}
 
-Vergleich der Transkripte mit den Transkripten von @morton_fitzsimons_sivaramakrishan_jepson_niven_2024. BERTopic benutzen, weil siehe @grootendorst_2022. Für die Analyse von qualitativen Daten mit AI und virtuellen Fokusgruppen, siehe @olawade_omeni_gore_hadi_2025.
+This section provides a **preliminary, suggestive evaluation** of whether the pure AI focus group achieves its intended purpose: to generate insights comparable to those obtained from human focus groups. In particular, we are interested in the topics that both human and AI-led discussions can reveal.
 
-Am liebsten würde man genau das gleiche mit AI Gruppe und menschlicher Gruppe wie bei @zhang_zhang_cools_simeone_2024 machen.
+To conduct this comparison, we need a _"gold standard"_ against which the AI-generated topics can be measured. Here, we use the default focus group discussion described earlier, which closely imitates well-documented human focus groups reported by @morton_fitzsimons_sivaramakrishan_jepson_niven_2024. They provide three full transcripts (see `Morton et al - Material/Transcripts/Employee`) from 60-minute sessions with seven employees and a moderator discussing sedentary behavior. We compare these with two AI-generated transcripts recorded using `gpt-4o` and `gpt-5` (see `Geiecke_Jaravel_2025/data_focusgroup/transcripts`). The default prompts for the AI simulations were partially enriched with participant information from @morton_fitzsimons_sivaramakrishan_jepson_niven_2024 to achieve as close a comparison as possible.
 
-@fig-heatmap @tbl-topics
+For transcript comparison, topic modeling is a natural choice. Methods such as LDA or TF-IDF combined with clustering are commonly used. In our analysis, we employ [BERTopic](https://maartengr.github.io/BERTopic/index.html), developed by @grootendorst_2022. BERTopic 
+    _"leverages transformers and c-TF-IDF to create dense clusters, allowing for easily interpretable topics while preserving important words in topic descriptions."_
+This method combines several concepts covered in this course, including embeddings (BERT), dimensionality reduction (UMAP), clustering (KMeans), and weighting schemes (c-TF-IDF). BERTopic is a well-established algorithm, previously applied by @chopra_haaland_2024 to extract subjective mental models from qualitative interviews. For general guidance on thematic analyses with or without AI, see @braun_clarke_2021 and @olawade_omeni_gore_hadi_2025.
 
-thematic analysis/code [@braun_clarke_2021]
-
-Für hdbscan Microsoft C++14.0 is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+Before starting with the analysis, it is important to note that analyzing only five transcripts is insufficient for traditional topic modeling, which usually requires hundreds or thousands of documents. To mitigate this, we divide each transcript into smaller chunks, allowing BERTopic to assign a **topic representation** to each chunk. An excerpt of the results is shown in the **table below**. While it is theoretically possible to cluster and name these topics, doing so here is not meaningful. Some chunks may contain deep insights, while others may consist solely of moderator questions. Additionally, treating chunks as independent documents ignores the structured interview guidelines, which help prevent repetitive topic representations. Therefore, we do not further classify the topic representations in this evaluation.
 
 ```{python}
 # --- Step 1: Import required libraries ---
@@ -981,7 +1099,6 @@ fig_heatmap = topic_model.visualize_heatmap(top_n_topics=20)
 fig_heatmap.update_layout(showlegend=True)  
 
 # Return the figure for Quarto rendering
-display(fig_heatmap)
 fig_heatmap.write_image("fig_heatmap.png", width=800, height=600)
 
 # --- Step 9: Chunk-level scatterplot with D1/D2 axes ---
@@ -1052,40 +1169,51 @@ fig.add_annotation(
     xanchor="center"
 )
 
-display(fig)
 fig.write_image("fig_chunks.png", width=800, height=600)
 ```
 
+:::{.content-visible when-format="html"}
+```{python}
+display(fig_heatmap)
+display(fig)
+```
+:::
+:::{.content-visible when-format="ipynb"}
+```{python}
+display(fig_heatmap)
+display(fig)
+```
+:::
+
 ::: {.content-visible when-format="gfm"}
-![Heatmap - Semantic Cosine Similarity Across 20 Top Topics](fig_heatmap.png){#fig-heatmap fig-cap="Heatmap - Semantic Cosine Similarity Across 20 Top Topics"}
+![Heatmap - Semantic Cosine Similarity Across 20 Top Topics](fig_heatmap.png){#fig-heatmap}
 :::
 
 ::: {.content-visible when-format="pdf"}
-![Heatmap - Semantic Cosine Similarity Across 20 Top Topics](fig_heatmap.png){fig-cap="Heatmap - Semantic Cosine Similarity Across 20 Top Topics"}
+![Heatmap - Semantic Cosine Similarity Across 20 Top Topics](fig_heatmap.png){#fig-heatmap}
 :::
 
 ::: {.content-visible when-format="gfm"}
-![Transcripts - Topics and Topic Frequency](fig_chunks.png){#fig-chunks fig-cap="Transcripts - Topics and Topic Frequency"}
+![Transcripts - Topics and Topic Frequency](fig_chunks.png){#fig-chunks}
 :::
 
 ::: {.content-visible when-format="pdf"}
-![Transcripts - Topics and Topic Frequency](fig_chunks.png){fig-cap="Transcripts - Topics and Topic Frequency"}
+![Transcripts - Topics and Topic Frequency](fig_chunks.png){#fig-chunks}
 :::
+
+The **heatmap** visualizes the **top 20 topic representations** and their **cosine similarity** to each other. This provides a preliminary overview, demonstrating that the most frequent topics cover distinct themes.  
+
+The **scatterplot** reduces the topic dimensionality to two dimensions, illustrating how chunk topics and transcript topics are distributed in a 2D vector space. Note that the HTML format, allows the interactive inspection of individual data (topic) points. Overall, no transcript appears clearly separable from the others, suggesting that the AI focus group captures topics that humans also perceive as important when it comes to sitting behavior. Further, both AI transcripts tend to discuss similar topics, which is expected since only the LLM model varied while prompts remained constant. Interestingly, AI-generated topic representations are more densely clustered in the bottom-right region of the plot. This could indicate an additional perspective introduced by the AI, limitations in prompt replication to simulate exact human disscusion partipants, or improvable LLM temperature settings. Several other factors - like models being trained on things that have happened after the human focus group was conducted - may also contribute to this observation.
+
+Ultimately, we cannot definitively evaluate whether these patterns are positive or negative due to the small dataset. Furthermore, the two AI focus groups were not moderated identically, and prompts were not fully optimized to replicate human interactions. In similar research, @zhang_zhang_cools_simeone_2024 found that AI agents and humans contribute very similar, though not identical, content when moderated by AI. Their descriptive analyses produced results comparable to those observed here. 
+
 
 # Conclusion {#sec-discussion}
 
-**(4)** I coded a possible way how the moderator or system decides on who is allowed to talk and who responds to others' comments.
+In summary, while further evaluation is needed, this **flexible, end-to-end implementable** AI focus group - and by extension, the hybrid format - appears capable of generating human-like outcomes, making this deliverable at least partially successful. A key improvement is the enhanced transition logic, which addresses a limitation observed in previous AI-moderated focus groups: the participant selection mechanism. Earlier implementations often relied on bidding competitions, either imagined by the moderator or triggered by participant signals (e.g., hand-raising), as discussed in @zhang_zhang_cools_simeone_2024. In contrast, the **invisible moderator** role introduced here provides a more robust and natural approach to determining speaking order.
 
-**(5)** I coded a the possibility to simulate either some or all participants of the focus-group with AI agents.
+The development of this format is particularly relevant for research exploring group dynamics under varying conditions. For example, it enables the study of human reactions to exogenously induced polarized, radical, or conspiracy-oriented positions, dependent on whether these are homogeneous or heterogeneous within a discussion group. Moreover, the hybrid focus group format is advantageous when it is difficult to gather all desired social groups simultaneously or when specific representatives are unavailable.
 
-**(6)** I coded a way to publish the interview not only locally but also publicly.
-
-**(7)** I run a focus-group and compare the outcome of the given outline with real world examples by embedding the real world example and run a clustering exercise on both transcripts.
-
-**How to determine whose turn it is to speak?**
-
-Zum Beispiel über das andere Fokurgruppenpapier schrieben, dass meine Transitionlogik natürlicher ist und diese auch noch weitere Schwachstellen ausgemacht haben. Auch haben die im Gegensatz zu mir die Messagestruktur anders genutzt, was ich etwas schwierig finde. Dazu diskutieren. Auch diskutieren, dass man immer das Problem hat, ob man Leute sehr strak oder praktisch gar nicht prompten soll. Das hat aber trotzdem den Vorteil, dass das mit den unterschiedlichen Formen von Fokusgruppen (Fachbereiche unter sich oder ganz unterschiedliche Leute in einer Fokusgruppe) super kompatibel ist. Auch wenn es schwierig ist bestimmte Charaktere zu bekommen, kann man die einfach mit AI Agenten simulieren. Auch sich darauf beziehen, dass Leute gerne mit AIs interagiere. Zukünftige Schritte wären Spracherweiterung und Videosimulation der AI. Vorteil ist auch, dass AI Agents prinzipiell keiner Sample Selection unterliegen, also sich nicht rausselektieren können. Es ist allerdings die Frgae, ob so ein Verhalten vielleicht isch auch in der Datenebene mit denen die AI Agenten trainiert sind wiederspiegelt. Siehe Limitations von @morton_fitzsimons_sivaramakrishan_jepson_niven_2024.
-
-Für die Diskussion oder Conclusion verweise auch auf @zhang_zhang_cools_simeone_2024.
+Finally, it is important to acknowledge the current limitations of the design (see @sec-focusgroup-limitations). Future extensions could include video _"deepfakes"_ of AI participants to enhance the visual and emotional realism of the conversation. Such improvements would allow both the invisible moderator and human participants to exercise more natural autonomy in deciding when to contribute, further bridging the gap between AI simulations and real-world focus group dynamics.
 
 # References {#sec:references}

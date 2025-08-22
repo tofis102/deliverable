@@ -442,6 +442,14 @@ You can try the \emph{AI-powered focus group} \textbf{with} a
 \emph{human participant}
 \href{https://focusgroup-human.streamlit.app/}{here}.
 
+\textbf{Note:} It can happen that the apps are set in standby modus.
+Then you are asked to reactivate them by clicking on a button. This may
+take a minute. If the website is building this typically can also take
+up to a minute.
+
+There is also the option to activate login credentials so that every
+participant can be identified. I haven't done this here.
+
 These examples are running using my API keys. If you encounter any
 issues, such as the examples not working because the API key has run out
 of credits, please contact me at \texttt{s72tfisc@uni-bonn.de}. However,
@@ -474,18 +482,17 @@ and implementation style.
   \begin{itemize}
   \tightlist
   \item
-    \textbf{Chopra and Haaland
-    (\citeproc{ref-chopra_haaland_2024}{2024})}: Being the first to
-    develop AI-led interviews, they faced challenges with token limits
-    in long conversations. To overcome this, they implemented a
-    \textbf{multi-AI-agent architecture} that summarizes context and
-    conversation flow across multiple agents.\\
+    Chopra and Haaland (\citeproc{ref-chopra_haaland_2024}{2024}): Being
+    the first to develop AI-led interviews, they faced challenges with
+    token limits in long conversations. To overcome this, they
+    implemented a \textbf{multi-AI-agent architecture} that summarizes
+    context and conversation flow across multiple agents.\\
   \item
-    \textbf{Geiecke and Jaravel
-    (\citeproc{ref-geiecke_jaravel_2025}{2025})}: This architecture is
-    no longer necessary. They simplify the setup by using a single AI
-    agent - in particular the \texttt{messages} input of the moderator
-    prompt - benefiting from more efficient token usage.
+    Geiecke and Jaravel (\citeproc{ref-geiecke_jaravel_2025}{2025}):
+    This architecture is no longer necessary. They simplify the setup by
+    using a single AI agent - in particular the \texttt{messages} input
+    of the moderator prompt - benefiting from more efficient token
+    usage.
   \end{itemize}
 \item
   \textbf{Response Streaming}
@@ -493,16 +500,14 @@ and implementation style.
   \begin{itemize}
   \tightlist
   \item
-    \textbf{Geiecke and Jaravel
-    (\citeproc{ref-geiecke_jaravel_2025}{2025})}: Implements
-    \textbf{streaming of AI responses}, which allows participants to see
-    answers as they are generated. This enhances interactivity and
-    reduces waiting time.\\
+    Geiecke and Jaravel (\citeproc{ref-geiecke_jaravel_2025}{2025}):
+    Implements \textbf{streaming of AI responses}, which allows
+    participants to see answers as they are generated. This enhances
+    interactivity and reduces waiting time.\\
   \item
-    \textbf{Chopra and Haaland
-    (\citeproc{ref-chopra_haaland_2024}{2024})}: Uses a more traditional
-    response model, which may have slightly longer latency for each AI
-    reply.
+    Chopra and Haaland (\citeproc{ref-chopra_haaland_2024}{2024}): Uses
+    a more traditional response model, which may have slightly longer
+    latency for each AI reply.
   \end{itemize}
 \item
   \textbf{Application Framework}
@@ -510,18 +515,16 @@ and implementation style.
   \begin{itemize}
   \tightlist
   \item
-    \textbf{Chopra and Haaland
-    (\citeproc{ref-chopra_haaland_2024}{2024})}: Built on a
-    \textbf{Flask app}, providing a classic web server setup suitable
-    for flexible backend integrations and deployment (e.g., on AWS
-    Lambda). The app setup is based on JSON and HTML, making the design
-    of the app more complex, but also easier to edit.
+    Chopra and Haaland (\citeproc{ref-chopra_haaland_2024}{2024}): Built
+    on a \textbf{Flask app}, providing a classic web server setup
+    suitable for flexible backend integrations and deployment (e.g., on
+    AWS Lambda). The app setup is based on JSON and HTML, making the
+    design of the app more complex, but also easier to edit.
   \item
-    \textbf{Geiecke and Jaravel
-    (\citeproc{ref-geiecke_jaravel_2025}{2025})}: Uses a
-    \textbf{Streamlit app}, offering faster setup for local or online
-    deployment with an interactive interface out-of-the-box. This does
-    not need any JSON or HTML input, and therefore is especially
+    Geiecke and Jaravel (\citeproc{ref-geiecke_jaravel_2025}{2025}):
+    Uses a \textbf{Streamlit app}, offering faster setup for local or
+    online deployment with an interactive interface out-of-the-box. This
+    does not need any JSON or HTML input, and therefore is especially
     convenient for rapid prototyping and testing.
   \end{itemize}
 \end{enumerate}
@@ -1247,7 +1250,7 @@ Further, the AI agents' prompts rely on two types of
 
 \centering{
 
-\includegraphics[width=5in,height=5.67in]{Notebook_files/figure-latex/mermaid-figure-1.png}
+\includegraphics[width=5in,height=5.67in]{Notebook_files/figure-latex/mermaid-figure-2.png}
 
 }
 
@@ -1902,27 +1905,59 @@ while coding the prototype:
   whether different temperature settings improve reliability.
 \end{itemize}
 
-\section{Evaluation}\label{sec-evaluation}
+\subsection{Evaluation}\label{sec-evaluation}
 
-Vergleich der Transkripte mit den Transkripten von Morton et al.
+This section provides a \textbf{preliminary, suggestive evaluation} of
+whether the pure AI focus group achieves its intended purpose: to
+generate insights comparable to those obtained from human focus groups.
+In particular, we are interested in the topics that both human and
+AI-led discussions can reveal.
+
+To conduct this comparison, we need a \emph{``gold standard''} against
+which the AI-generated topics can be measured. Here, we use the default
+focus group discussion described earlier, which closely imitates
+well-documented human focus groups reported by Morton et al.
 (\citeproc{ref-morton_fitzsimons_sivaramakrishan_jepson_niven_2024}{2024}).
-BERTopic benutzen, weil siehe Grootendorst
-(\citeproc{ref-grootendorst_2022}{2022}). Für die Analyse von
-qualitativen Daten mit AI und virtuellen Fokusgruppen, siehe Olawade et
-al. (\citeproc{ref-olawade_omeni_gore_hadi_2025}{2025}).
+They provide three full transcripts (see
+\texttt{Morton\ et\ al\ -\ Material/Transcripts/Employee}) from
+60-minute sessions with seven employees and a moderator discussing
+sedentary behavior. We compare these with two AI-generated transcripts
+recorded using \texttt{gpt-4o} and \texttt{gpt-5} (see
+\texttt{Geiecke\_Jaravel\_2025/data\_focusgroup/transcripts}). The
+default prompts for the AI simulations were partially enriched with
+participant information from Morton et al.
+(\citeproc{ref-morton_fitzsimons_sivaramakrishan_jepson_niven_2024}{2024})
+to achieve as close a comparison as possible.
 
-Am liebsten würde man genau das gleiche mit AI Gruppe und menschlicher
-Gruppe wie bei Zhang et al.
-(\citeproc{ref-zhang_zhang_cools_simeone_2024}{2024}) machen.
+For transcript comparison, topic modeling is a natural choice. Methods
+such as LDA or TF-IDF combined with clustering are commonly used. In our
+analysis, we employ
+\href{https://maartengr.github.io/BERTopic/index.html}{BERTopic},
+developed by Grootendorst (\citeproc{ref-grootendorst_2022}{2022}).
+BERTopic \emph{``leverages transformers and c-TF-IDF to create dense
+clusters, allowing for easily interpretable topics while preserving
+important words in topic descriptions.''} This method combines several
+concepts covered in this course, including embeddings (BERT),
+dimensionality reduction (UMAP), clustering (KMeans), and weighting
+schemes (c-TF-IDF). BERTopic is a well-established algorithm, previously
+applied by Chopra and Haaland (\citeproc{ref-chopra_haaland_2024}{2024})
+to extract subjective mental models from qualitative interviews. For
+general guidance on thematic analyses with or without AI, see Braun and
+Clarke (\citeproc{ref-braun_clarke_2021}{2021}) and Olawade et al.
+(\citeproc{ref-olawade_omeni_gore_hadi_2025}{2025}).
 
-Figure~\ref{fig-heatmap} \textbf{?@tbl-topics}
-
-thematic analysis/code (\citeproc{ref-braun_clarke_2021}{Braun and
-Clarke 2021})
-
-Für hdbscan Microsoft C++14.0 is required. Get it with ``Microsoft C++
-Build Tools'':
-https://visualstudio.microsoft.com/visual-cpp-build-tools/
+Before starting with the analysis, it is important to note that
+analyzing only five transcripts is insufficient for traditional topic
+modeling, which usually requires hundreds or thousands of documents. To
+mitigate this, we divide each transcript into smaller chunks, allowing
+BERTopic to assign a \textbf{topic representation} to each chunk. An
+excerpt of the results is shown in the \textbf{table below}. While it is
+theoretically possible to cluster and name these topics, doing so here
+is not meaningful. Some chunks may contain deep insights, while others
+may consist solely of moderator questions. Additionally, treating chunks
+as independent documents ignores the structured interview guidelines,
+which help prevent repetitive topic representations. Therefore, we do
+not further classify the topic representations in this evaluation.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -2018,19 +2053,15 @@ https://visualstudio.microsoft.com/visual-cpp-build-tools/
 \end{Shaded}
 
 \begin{verbatim}
-C:\Users\torben\Documents\Bonn\Uni\Courses\Data Sciene, Machine Learning, AI\Deliverable\Submission Code\.venv_notebook\Lib\site-packages\tqdm\auto.py:21: TqdmWarning:
-
-IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-
-2025-08-22 15:50:52,057 - BERTopic - Embedding - Transforming documents to embeddings.
-Batches:   0%|          | 0/15 [00:00<?, ?it/s]Batches:   7%|▋         | 1/15 [00:00<00:08,  1.64it/s]Batches:  13%|█▎        | 2/15 [00:01<00:08,  1.46it/s]Batches:  20%|██        | 3/15 [00:02<00:08,  1.47it/s]Batches:  27%|██▋       | 4/15 [00:02<00:07,  1.43it/s]Batches:  33%|███▎      | 5/15 [00:03<00:07,  1.42it/s]Batches:  40%|████      | 6/15 [00:04<00:06,  1.45it/s]Batches:  47%|████▋     | 7/15 [00:04<00:05,  1.44it/s]Batches:  53%|█████▎    | 8/15 [00:05<00:05,  1.39it/s]Batches:  60%|██████    | 9/15 [00:06<00:04,  1.40it/s]Batches:  67%|██████▋   | 10/15 [00:06<00:03,  1.44it/s]Batches:  73%|███████▎  | 11/15 [00:07<00:02,  1.47it/s]Batches:  80%|████████  | 12/15 [00:08<00:02,  1.49it/s]Batches:  87%|████████▋ | 13/15 [00:08<00:01,  1.53it/s]Batches:  93%|█████████▎| 14/15 [00:09<00:00,  1.53it/s]Batches: 100%|██████████| 15/15 [00:09<00:00,  1.56it/s]
-2025-08-22 15:51:03,381 - BERTopic - Embedding - Completed ✓
-2025-08-22 15:51:03,383 - BERTopic - Dimensionality - Fitting the dimensionality reduction algorithm
-2025-08-22 15:51:13,622 - BERTopic - Dimensionality - Completed ✓
-2025-08-22 15:51:13,623 - BERTopic - Cluster - Start clustering the reduced embeddings
-2025-08-22 15:51:13,646 - BERTopic - Cluster - Completed ✓
-2025-08-22 15:51:13,651 - BERTopic - Representation - Fine-tuning topics using representation models.
-2025-08-22 15:51:14,207 - BERTopic - Representation - Completed ✓
+2025-08-22 20:32:31,864 - BERTopic - Embedding - Transforming documents to embeddings.
+Batches:   0%|          | 0/15 [00:00<?, ?it/s]Batches:   7%|▋         | 1/15 [00:00<00:07,  1.87it/s]Batches:  13%|█▎        | 2/15 [00:01<00:07,  1.64it/s]Batches:  20%|██        | 3/15 [00:01<00:07,  1.52it/s]Batches:  27%|██▋       | 4/15 [00:02<00:07,  1.44it/s]Batches:  33%|███▎      | 5/15 [00:03<00:06,  1.47it/s]Batches:  40%|████      | 6/15 [00:04<00:06,  1.41it/s]Batches:  47%|████▋     | 7/15 [00:04<00:05,  1.34it/s]Batches:  53%|█████▎    | 8/15 [00:05<00:05,  1.33it/s]Batches:  60%|██████    | 9/15 [00:06<00:04,  1.32it/s]Batches:  67%|██████▋   | 10/15 [00:07<00:03,  1.38it/s]Batches:  73%|███████▎  | 11/15 [00:07<00:02,  1.43it/s]Batches:  80%|████████  | 12/15 [00:08<00:02,  1.46it/s]Batches:  87%|████████▋ | 13/15 [00:09<00:01,  1.48it/s]Batches:  93%|█████████▎| 14/15 [00:09<00:00,  1.55it/s]Batches: 100%|██████████| 15/15 [00:09<00:00,  1.55it/s]
+2025-08-22 20:32:43,157 - BERTopic - Embedding - Completed ✓
+2025-08-22 20:32:43,159 - BERTopic - Dimensionality - Fitting the dimensionality reduction algorithm
+2025-08-22 20:32:43,908 - BERTopic - Dimensionality - Completed ✓
+2025-08-22 20:32:43,909 - BERTopic - Cluster - Start clustering the reduced embeddings
+2025-08-22 20:32:43,939 - BERTopic - Cluster - Completed ✓
+2025-08-22 20:32:43,945 - BERTopic - Representation - Fine-tuning topics using representation models.
+2025-08-22 20:32:44,236 - BERTopic - Representation - Completed ✓
 \end{verbatim}
 
 \begin{longtable}[]{@{}llllll@{}}
@@ -2040,35 +2071,35 @@ Batches:   0%|          | 0/15 [00:00<?, ?it/s]Batches:   7%|▋         | 1/15 
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-0 & -1 & 12 & -1\_tired\_could\_build\_time & {[}tired, could, build,
-time, youre, now, your, ... & {[}aware and you did a lot of that, that
-was int... \\
-1 & 0 & 7 & 0\_lunch\_here\_just\_easy & {[}lunch, here, just, easy,
-buy, eat, healthily,... & {[}healthily at home, actually, I think I have
-g... \\
-2 & 1 & 5 & 1\_dog\_computer\_nice\_chairs & {[}dog, computer, nice,
-chairs, horizontally, th... & {[}want to sit, it feels quite nice to be
-at hom... \\
-3 & 2 & 5 & 2\_cancer\_surprised\_james\_thank & {[}cancer, surprised,
-james, thank, seeing, cons... & {[}the time, but sometimes you don't
-really full... \\
-4 & 3 & 5 & 3\_monotony\_improvements\_discomfort\_maintaining &
-{[}monotony, improvements, discomfort, maintaini... & {[}counter not
-only encourages me to stand more ... \\
+0 & -1 & 12 & -1\_walk\_winter\_activities\_james & {[}walk, winter,
+activities, james, surprised, f... & {[}It\textquotesingle s great to be
+part of this discussion. As ... \\
+1 & 0 & 9 & 0\_organisations\_ailsa\_hand\_focus & {[}organisations,
+ailsa, hand, focus, groups, wa... & {[}we'll, sort of, assume that
+you're happy for ... \\
+2 & 1 & 7 & 1\_havent\_tried\_offering\_revealed & {[}havent, tried,
+offering, revealed, initially,... & {[}Harper mentioned about these yoga
+breaks that... \\
+3 & 2 & 7 & 2\_emails\_disappeared\_felt\_glued & {[}emails,
+disappeared, felt, glued, chair, morn... & {[}all for sharing a bit
+about yourselves and ho... \\
+4 & 3 & 5 & 3\_whats\_noise\_creating\_experience & {[}whats, noise,
+creating, experience, become, d... & {[}enough makes it easier to
+sustain both the fo... \\
 ... & ... & ... & ... & ... & ... \\
-153 & 152 & 2 & 152\_additionally\_desks\_standing\_lets &
+151 & 150 & 2 & 150\_additionally\_desks\_standing\_lets &
 {[}additionally, desks, standing, lets, traditio... & {[}found creative
 and practical ways to stay act... \\
-154 & 153 & 2 & 153\_refreshed\_distinct\_areas\_physically &
+152 & 151 & 2 & 151\_refreshed\_distinct\_areas\_physically &
 {[}refreshed, distinct, areas, physically, relax... & {[}and energy.
 It's a simple way to stay active ... \\
-155 & 154 & 2 & 154\_virtual\_step\_challenge\_fantastic & {[}virtual,
-step, challenge, fantastic, social, ... & {[}can keep us all connected
-and motivated. Harp... \\
-156 & 155 & 2 & 155\_shared\_virtual\_step\_connected & {[}shared,
-virtual, step, connected, remotely, c... & {[}active but also helps
-combat the isolation of... \\
-157 & 156 & 2 & 156\_discussed\_share\_solutions\_transforming &
+153 & 152 & 2 & 152\_relaxation\_zones\_creating\_routine &
+{[}relaxation, zones, creating, routine, workspa... & {[}signal my brain
+when to switch from work mode... \\
+154 & 153 & 2 & 153\_virtual\_social\_step\_boost & {[}virtual, social,
+step, boost, fun, motivated,... & {[}a social element to promote
+movement is a fan... \\
+155 & 154 & 2 & 154\_discussed\_share\_solutions\_transforming &
 {[}discussed, share, solutions, transforming, la... & {[}on how to stay
 active and engaged. As we wrap... \\
 \end{longtable}
@@ -2082,7 +2113,6 @@ active and engaged. As we wrap... \\
 \NormalTok{fig\_heatmap.update\_layout(showlegend}\OperatorTok{=}\VariableTok{True}\NormalTok{)  }
 
 \CommentTok{\# Return the figure for Quarto rendering}
-\NormalTok{display(fig\_heatmap)}
 \NormalTok{fig\_heatmap.write\_image(}\StringTok{"fig\_heatmap.png"}\NormalTok{, width}\OperatorTok{=}\DecValTok{800}\NormalTok{, height}\OperatorTok{=}\DecValTok{600}\NormalTok{)}
 
 \CommentTok{\# {-}{-}{-} Step 9: Chunk{-}level scatterplot with D1/D2 axes {-}{-}{-}}
@@ -2153,32 +2183,20 @@ active and engaged. As we wrap... \\
 \NormalTok{    xanchor}\OperatorTok{=}\StringTok{"center"}
 \NormalTok{)}
 
-\NormalTok{display(fig)}
 \NormalTok{fig.write\_image(}\StringTok{"fig\_chunks.png"}\NormalTok{, width}\OperatorTok{=}\DecValTok{800}\NormalTok{, height}\OperatorTok{=}\DecValTok{600}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-Unable to display output for mime type(s): text/html
-\end{verbatim}
-
-\begin{verbatim}
-Unable to display output for mime type(s): text/html
-\end{verbatim}
-
-\begin{verbatim}
-Unable to display output for mime type(s): text/html
-\end{verbatim}
-
 \begin{figure}
 
 \centering{
 
-\pandocbounded{\includegraphics[keepaspectratio]{fig_chunks.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{fig_heatmap.png}}
 
 }
 
-\caption{\label{fig-heatmap}}
+\caption{\label{fig-heatmap}Heatmap - Semantic Cosine Similarity Across
+20 Top Topics}
 
 \end{figure}%
 
@@ -2190,48 +2208,73 @@ Unable to display output for mime type(s): text/html
 
 }
 
-\caption{\label{fig-chunks}}
+\caption{\label{fig-chunks}Transcripts - Topics and Topic Frequency}
 
 \end{figure}%
+
+The \textbf{heatmap} visualizes the \textbf{top 20 topic
+representations} and their \textbf{cosine similarity} to each other.
+This provides a preliminary overview, demonstrating that the most
+frequent topics cover distinct themes.
+
+The \textbf{scatterplot} reduces the topic dimensionality to two
+dimensions, illustrating how chunk topics and transcript topics are
+distributed in a 2D vector space. Note that the HTML format, allows the
+interactive inspection of individual data (topic) points. Overall, no
+transcript appears clearly separable from the others, suggesting that
+the AI focus group captures topics that humans also perceive as
+important when it comes to sitting behavior. Further, both AI
+transcripts tend to discuss similar topics, which is expected since only
+the LLM model varied while prompts remained constant. Interestingly,
+AI-generated topic representations are more densely clustered in the
+bottom-right region of the plot. This could indicate an additional
+perspective introduced by the AI, limitations in prompt replication to
+simulate exact human disscusion partipants, or improvable LLM
+temperature settings. Several other factors - like models being trained
+on things that have happened after the human focus group was conducted -
+may also contribute to this observation.
+
+Ultimately, we cannot definitively evaluate whether these patterns are
+positive or negative due to the small dataset. Furthermore, the two AI
+focus groups were not moderated identically, and prompts were not fully
+optimized to replicate human interactions. In similar research, Zhang et
+al. (\citeproc{ref-zhang_zhang_cools_simeone_2024}{2024}) found that AI
+agents and humans contribute very similar, though not identical, content
+when moderated by AI. Their descriptive analyses produced results
+comparable to those observed here.
 
 \section{Conclusion}\label{sec-discussion}
 
-\textbf{(4)} I coded a possible way how the moderator or system decides
-on who is allowed to talk and who responds to others' comments.
+In summary, while further evaluation is needed, this \textbf{flexible,
+end-to-end implementable} AI focus group - and by extension, the hybrid
+format - appears capable of generating human-like outcomes, making this
+deliverable at least partially successful. A key improvement is the
+enhanced transition logic, which addresses a limitation observed in
+previous AI-moderated focus groups: the participant selection mechanism.
+Earlier implementations often relied on bidding competitions, either
+imagined by the moderator or triggered by participant signals (e.g.,
+hand-raising), as discussed in Zhang et al.
+(\citeproc{ref-zhang_zhang_cools_simeone_2024}{2024}). In contrast, the
+\textbf{invisible moderator} role introduced here provides a more robust
+and natural approach to determining speaking order.
 
-\textbf{(5)} I coded a the possibility to simulate either some or all
-participants of the focus-group with AI agents.
+The development of this format is particularly relevant for research
+exploring group dynamics under varying conditions. For example, it
+enables the study of human reactions to exogenously induced polarized,
+radical, or conspiracy-oriented positions, dependent on whether these
+are homogeneous or heterogeneous within a discussion group. Moreover,
+the hybrid focus group format is advantageous when it is difficult to
+gather all desired social groups simultaneously or when specific
+representatives are unavailable.
 
-\textbf{(6)} I coded a way to publish the interview not only locally but
-also publicly.
-
-\textbf{(7)} I run a focus-group and compare the outcome of the given
-outline with real world examples by embedding the real world example and
-run a clustering exercise on both transcripts.
-
-\textbf{How to determine whose turn it is to speak?}
-
-Zum Beispiel über das andere Fokurgruppenpapier schrieben, dass meine
-Transitionlogik natürlicher ist und diese auch noch weitere
-Schwachstellen ausgemacht haben. Auch haben die im Gegensatz zu mir die
-Messagestruktur anders genutzt, was ich etwas schwierig finde. Dazu
-diskutieren. Auch diskutieren, dass man immer das Problem hat, ob man
-Leute sehr strak oder praktisch gar nicht prompten soll. Das hat aber
-trotzdem den Vorteil, dass das mit den unterschiedlichen Formen von
-Fokusgruppen (Fachbereiche unter sich oder ganz unterschiedliche Leute
-in einer Fokusgruppe) super kompatibel ist. Auch wenn es schwierig ist
-bestimmte Charaktere zu bekommen, kann man die einfach mit AI Agenten
-simulieren. Auch sich darauf beziehen, dass Leute gerne mit AIs
-interagiere. Zukünftige Schritte wären Spracherweiterung und
-Videosimulation der AI. Vorteil ist auch, dass AI Agents prinzipiell
-keiner Sample Selection unterliegen, also sich nicht rausselektieren
-können. Es ist allerdings die Frgae, ob so ein Verhalten vielleicht isch
-auch in der Datenebene mit denen die AI Agenten trainiert sind
-wiederspiegelt. Siehe Limitations von Morton et al.
-(\citeproc{ref-morton_fitzsimons_sivaramakrishan_jepson_niven_2024}{2024}).
-
-Für die Diskussion oder Conclusion verweise auch auf Zhang et al.
-(\citeproc{ref-zhang_zhang_cools_simeone_2024}{2024}).
+Finally, it is important to acknowledge the current limitations of the
+design (see Section~\ref{sec-focusgroup-limitations}). Future extensions
+could include video \emph{``deepfakes''} of AI participants to enhance
+the visual and emotional realism of the conversation. Such improvements
+would allow both the invisible moderator and human participants to
+exercise more natural autonomy in deciding when to contribute, further
+bridging the gap between AI simulations and real-world focus group
+dynamics.
 
 \section*{References}\label{sec:references}
 \addcontentsline{toc}{section}{References}
