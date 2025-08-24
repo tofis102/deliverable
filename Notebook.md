@@ -1650,15 +1650,15 @@ topic_info = topic_model.get_topic_info()
 display(topic_info)
 ```
 
-    2025-08-22 20:33:58,113 - BERTopic - Embedding - Transforming documents to embeddings.
-    Batches:   0%|          | 0/15 [00:00<?, ?it/s]Batches:   7%|▋         | 1/15 [00:00<00:11,  1.19it/s]Batches:  13%|█▎        | 2/15 [00:01<00:10,  1.28it/s]Batches:  20%|██        | 3/15 [00:02<00:09,  1.32it/s]Batches:  27%|██▋       | 4/15 [00:03<00:08,  1.31it/s]Batches:  33%|███▎      | 5/15 [00:03<00:07,  1.30it/s]Batches:  40%|████      | 6/15 [00:04<00:06,  1.33it/s]Batches:  47%|████▋     | 7/15 [00:05<00:06,  1.33it/s]Batches:  53%|█████▎    | 8/15 [00:06<00:05,  1.32it/s]Batches:  60%|██████    | 9/15 [00:06<00:04,  1.33it/s]Batches:  67%|██████▋   | 10/15 [00:07<00:03,  1.34it/s]Batches:  73%|███████▎  | 11/15 [00:08<00:02,  1.36it/s]Batches:  80%|████████  | 12/15 [00:08<00:02,  1.39it/s]Batches:  87%|████████▋ | 13/15 [00:09<00:01,  1.41it/s]Batches:  93%|█████████▎| 14/15 [00:10<00:00,  1.45it/s]Batches: 100%|██████████| 15/15 [00:10<00:00,  1.94it/s]Batches: 100%|██████████| 15/15 [00:10<00:00,  1.44it/s]
-    2025-08-22 20:34:10,255 - BERTopic - Embedding - Completed ✓
-    2025-08-22 20:34:10,257 - BERTopic - Dimensionality - Fitting the dimensionality reduction algorithm
-    2025-08-22 20:34:10,896 - BERTopic - Dimensionality - Completed ✓
-    2025-08-22 20:34:10,897 - BERTopic - Cluster - Start clustering the reduced embeddings
-    2025-08-22 20:34:10,919 - BERTopic - Cluster - Completed ✓
-    2025-08-22 20:34:10,923 - BERTopic - Representation - Fine-tuning topics using representation models.
-    2025-08-22 20:34:11,114 - BERTopic - Representation - Completed ✓
+    2025-08-24 07:34:30,870 - BERTopic - Embedding - Transforming documents to embeddings.
+    Batches:   0%|          | 0/15 [00:00<?, ?it/s]Batches:   7%|▋         | 1/15 [00:00<00:10,  1.34it/s]Batches:  13%|█▎        | 2/15 [00:01<00:09,  1.44it/s]Batches:  20%|██        | 3/15 [00:02<00:08,  1.49it/s]Batches:  27%|██▋       | 4/15 [00:02<00:07,  1.41it/s]Batches:  33%|███▎      | 5/15 [00:03<00:07,  1.43it/s]Batches:  40%|████      | 6/15 [00:04<00:06,  1.30it/s]Batches:  47%|████▋     | 7/15 [00:05<00:06,  1.18it/s]Batches:  53%|█████▎    | 8/15 [00:06<00:05,  1.22it/s]Batches:  60%|██████    | 9/15 [00:06<00:04,  1.25it/s]Batches:  67%|██████▋   | 10/15 [00:07<00:03,  1.31it/s]Batches:  73%|███████▎  | 11/15 [00:08<00:02,  1.37it/s]Batches:  80%|████████  | 12/15 [00:08<00:02,  1.37it/s]Batches:  87%|████████▋ | 13/15 [00:09<00:01,  1.42it/s]Batches:  93%|█████████▎| 14/15 [00:10<00:00,  1.45it/s]Batches: 100%|██████████| 15/15 [00:10<00:00,  1.44it/s]
+    2025-08-24 07:34:43,597 - BERTopic - Embedding - Completed ✓
+    2025-08-24 07:34:43,598 - BERTopic - Dimensionality - Fitting the dimensionality reduction algorithm
+    2025-08-24 07:34:44,312 - BERTopic - Dimensionality - Completed ✓
+    2025-08-24 07:34:44,314 - BERTopic - Cluster - Start clustering the reduced embeddings
+    2025-08-24 07:34:44,350 - BERTopic - Cluster - Completed ✓
+    2025-08-24 07:34:44,355 - BERTopic - Representation - Fine-tuning topics using representation models.
+    2025-08-24 07:34:44,645 - BERTopic - Representation - Completed ✓
 
 <div>
 <style scoped>
@@ -1675,19 +1675,19 @@ display(topic_info)
 
 |  | Topic | Count | Name | Representation | Representative_Docs |
 |----|----|----|----|----|----|
-| 0 | -1 | 8 | -1_enhances_having_walk_only | \[enhances, having, walk, only, activities, try... | \[it was kind of similar to Mia point, actually... |
-| 1 | 0 | 9 | 0_tired_feeling_sitting_more | \[tired, feeling, sitting, more, mood, tirednes... | \[whole afternoon. Moderator: It sounds like ma... |
-| 2 | 1 | 8 | 1_aware_health_impact_leg | \[aware, health, impact, leg, long, are, arent,... | \[do at home. And at home, I’ve got two little ... |
-| 3 | 2 | 5 | 2_behaviour_familiar_was_sort | \[behaviour, familiar, was, sort, walking, yes,... | \[little bit different. I was monitoring my ste... |
-| 4 | 3 | 5 | 3_cancer_surprised_james_thank | \[cancer, surprised, james, thank, seeing, sede... | \[the time, but sometimes you don’t really full... |
+| 0 | -1 | 13 | -1_tired_removed_location_anyway | \[tired, removed, location, anyway, trying, win... | \[between tasks, the less I’m tired at the end ... |
+| 1 | 0 | 6 | 0_dog_computer_nice_chairs | \[dog, computer, nice, chairs, horizontally, th... | \[you have to walk your dog. CF: Yes, definitel... |
+| 2 | 1 | 6 | 1_prompts_study_individual_agreed | \[prompts, study, individual, agreed, phd, regu... | \[think it worked for my group for the first we... |
+| 3 | 2 | 5 | 2_technology_adding_gamification_progress | \[technology, adding, gamification, progress, t... | \[way to introduce movement without too much in... |
+| 4 | 3 | 5 | 3_carrying_use_surprisingly_quick | \[carrying, use, surprisingly, quick, small, st... | \[during work hours? Amelia: Taking short house... |
 | ... | ... | ... | ... | ... | ... |
-| 148 | 147 | 2 | 147_process_shifting_posture_resonates | \[process, shifting, posture, resonates, way, c... | \[screen. It feels less like a distraction and ... |
-| 149 | 148 | 2 | 148_refreshed_distinct_areas_physically | \[refreshed, distinct, areas, physically, relax... | \[and energy. It’s a simple way to stay active ... |
-| 150 | 149 | 2 | 149_relaxation_zones_creating_routine | \[relaxation, zones, creating, routine, workspa... | \[signal my brain when to switch from work mode... |
-| 151 | 150 | 2 | 150_enjoyable_both_interaction_exciting | \[enjoyable, both, interaction, exciting, our, ... | \[enjoyable. It’s exciting to think about the p... |
-| 152 | 151 | 2 | 151_discussed_share_solutions_transforming | \[discussed, share, solutions, transforming, to... | \[on how to stay active and engaged. As we wrap... |
+| 154 | 153 | 2 | 153_relaxation_zones_creating_routine | \[relaxation, zones, creating, routine, workspa... | \[signal my brain when to switch from work mode... |
+| 155 | 154 | 2 | 154_refreshed_distinct_areas_physically | \[refreshed, distinct, areas, physically, relax... | \[and energy. It’s a simple way to stay active ... |
+| 156 | 155 | 2 | 155_virtual_step_challenge_fantastic | \[virtual, step, challenge, fantastic, social, ... | \[can keep us all connected and motivated. Harp... |
+| 157 | 156 | 2 | 156_shared_virtual_step_connected | \[shared, virtual, step, connected, remotely, c... | \[active but also helps combat the isolation of... |
+| 158 | 157 | 2 | 157_discussed_share_solutions_transforming | \[discussed, share, solutions, transforming, la... | \[on how to stay active and engaged. As we wrap... |
 
-<p>153 rows × 5 columns</p>
+<p>159 rows × 5 columns</p>
 </div>
 
 ``` python

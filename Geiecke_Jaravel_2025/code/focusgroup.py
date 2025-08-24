@@ -825,16 +825,16 @@ st.title("🎤 AI-led Focus Group — Working from Home")
 # Short info text in an info box
 if HUMAN_ACTIVATION == True:
     st.info(
-    "💡 **Welcome to the online focus group!**\n\n"
-    "You are one of several participants in this discussion.\n\n"
-    "You can send a message **only** when the system selects you to speak — "
-    "a text box will appear when it’s your turn.\n\n"
-    "Please read what others have shared, and feel free to respond to their points "
-    "or introduce your own ideas.\n\n" 
-    "To make the start of the focus group easier, please introduce yourself with your name and occupation in your first message.\n\n" 
-    "Please do not share any legally or ethically problematic content. Otherwise the focus group will end immediately. "
-    "You can always end the conversation by clicking on the 'Quit' button."
-)
+        "💡 **Welcome to the online focus group!**\n\n"
+        "You are one of several participants in this discussion.\n\n"
+        "**You can send a message only when the system selects you to speak — "
+        "the chat box will become slightly darker when it’s your turn. Also the 'Running' text will vanish if it is your turn!**\n\n"
+        "Please read what others have shared, and feel free to respond to their points "
+        "or introduce your own ideas.\n\n"
+        "To make the start of the focus group easier, please introduce yourself with your name and occupation in your first message.\n\n"
+        "Please do not share any legally or ethically problematic content. Otherwise the focus group will end immediately.\n\n"
+        "You can always end the conversation by clicking on the 'Quit' button."
+    )
 
 
 # ===========================
@@ -938,7 +938,7 @@ with col2:
 # ====== WEBPAGE UPDATING AFTER EVERY RUN =====
 # =============================================
 # On rerun, display previous conversation (excluding system prompt/first message).
-for message in st.session_state.messages[1:]:
+for message in st.session_state.messages:
 
     names = list(ROLES.keys())
 
@@ -984,297 +984,313 @@ if "transcript_paths" not in st.session_state:
     }
 
 
+# === Session State Initialization ===
+if "interview_active" not in st.session_state:
+    st.session_state.interview_active = True
+if "next_speaker" not in st.session_state:
+    st.session_state.next_speaker = None
+if "user_already_spoke" not in st.session_state:
+    st.session_state.user_already_spoke = False
+
+# === Utility Functions ===
+def word_count(text):
+    return len(re.findall(r"\w+", text)) if isinstance(text, str) else 0
+
+def minutes_spoken(name, messages):
+    words = sum(word_count(m.get("content", "")) for m in messages if m.get("role") == name)
+    return round(words / 100.0, 1)
+
+# === Core Step Processor ===
+def process_interview_step():
+    """Invisible moderator decides who speaks next."""
+    chat_history = "\n".join(
+        f"{m['role']}: {m['content']}"
+        for m in st.session_state.messages
+        if ROLES.get(m["role"], {}).get("display_role") != "system"
+    )
+
+    total_words = sum(
+        word_count(m["content"])
+        for m in st.session_state.messages
+        if ROLES.get(m["role"], {}).get("display_role") != "system"
+    )
+    time_spent = round(total_words / 100.0, 1)
+
+    speaking_time_str = ", ".join(
+        f"{name} ({minutes_spoken(name, st.session_state.get('messages', []))} min)"
+        for name in ALL_VISIBLE_PARTICIPANTS
+    )
+
+    transition_count = sum(
+        1 for msg in st.session_state.get("messages_full", [])
+        if msg.get("content") == f"Moderator ({NAME_MODERATOR})_prompt_transition"
+    )
+
+    inv_filled = (
+        invisible_moderator["prompt"]
+        .replace("{chat_history}", chat_history)
+        .replace("{time_spent}", str(time_spent))
+        .replace("{speaking_time}", speaking_time_str)
+        .replace("{transition_count}", str(transition_count))
+    )
+
+    if DEBUGGING:
+        st.subheader("🔍 Invisible Moderator Prompt")
+        st.code(inv_filled)
+
+    # Call invisible moderator
+    if api == "openai":
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "system", "content": inv_filled}],
+            temperature=TEMPERATURE_INV_MOD,
+            **token_params
+        )
+        next_speaker = response.choices[0].message.content.strip()
+    else:  # ollama
+        response = requests.post(
+            url="http://localhost:11434/api/chat",
+            json={
+                "model": MODEL,
+                "messages": [{"role": "system", "content": inv_filled}],
+                "stream": False,
+                "temperature": TEMPERATURE_INV_MOD,
+                "max_tokens": MAX_OUTPUT_TOKENS,
+            }
+        )
+        next_speaker = response.json()["message"]["content"].strip()
+
+    if DEBUGGING:
+        st.subheader("📤 Invisible Moderator Output")
+        st.code(next_speaker)
+
+    st.session_state.next_speaker = next_speaker
+    st.session_state.messages_full.append({"role": "Invisible Moderator", "content": next_speaker})
+
+# === Main Interview Runner ===
 if st.session_state.interview_active:
+    # Decide next speaker
+    process_interview_step()
+    next_speaker = st.session_state.next_speaker
 
-    # Take time to build the website. Don't start immediately with the website:
-    time.sleep(3)
+    # Update context for prompts
+    chat_history = "\n".join(
+        f"{m['role']}: {m['content']}"
+        for m in st.session_state.messages
+        if ROLES.get(m["role"], {}).get("display_role") != "system"
+    )
+    total_words = sum(
+        word_count(m["content"])
+        for m in st.session_state.messages
+        if ROLES.get(m["role"], {}).get("display_role") != "system"
+    )
+    time_spent = round(total_words / 100.0, 1)
+    speaking_time_str = ", ".join(
+        f"{name} ({minutes_spoken(name, st.session_state.get('messages', []))} min)"
+        for name in ALL_VISIBLE_PARTICIPANTS
+    )
+    transition_count = sum(
+        1 for msg in st.session_state.get("messages_full", [])
+        if msg.get("content") == f"Moderator ({NAME_MODERATOR})_prompt_transition"
+    )
 
-    while st.session_state.interview_active:
+    # Selected Speaker still needs to speak
+    turn_completed = False
 
-        # Add break to keep the token rate per minute low enough
-        time.sleep(6)
+    # --- Human turn ---         
+    if HUMAN_ACTIVATION and next_speaker == "You":
 
-        # === 1. Build current chat context ===
+        st.session_state.user_already_spoke = False
 
-        # Updated conversation history
-        chat_history = "\n".join(
-            f"{m['role']}: {m['content']}"
-            for m in st.session_state.messages
-            if ROLES.get(m["role"], {}).get("display_role") != "system"
-        )
-
-        # Cummulated number of 'spoken' words
-        total_words = sum(
-            len(re.findall(r"\w+", m["content"]))
-            for m in st.session_state.messages
-            if ROLES.get(m["role"], {}).get("display_role") != "system"
-        )
-
-        # Cumulated elapsed time
-        time_spent = round(total_words / 100.0, 1)
-
-        # Function to count words for every participant and moderator
-        def word_count(text):
-            if not isinstance(text, str):
-                return 0
-            return len(re.findall(r"\w+", text))
+        # Show the chat input only if human hasn't already sent a message this turn
+        if not st.session_state.user_already_spoke:
+            user_msg = st.chat_input("Your message here")
         
-        # Messages of every indvidual + function to calculate speaking time of every participant and moderator
-        messages = st.session_state.get("messages", [])
+            if user_msg:
+                # Immediately mark that the user has spoken
+                st.session_state.user_already_spoke = True
+            
+                # Display human's message
+                with st.chat_message(ROLES["You"]["display_role"], avatar=ROLES["You"]["avatar"]):
+                    st.markdown(f"**{next_speaker}:** {user_msg}")
 
-        def minutes_spoken(name):
-            words = sum(word_count(m.get("content", "")) for m in messages
-                        if m.get("role") == name)
-            return round(words / 100.0, 1)  # adjust divisor to your wpm heuristic
+                # Append message to log files
+                st.session_state.messages.append({"role": "You", "content": user_msg})
+                st.session_state.messages_full.append({"role": "You", "content": user_msg})
 
-        speaking_time_str = ", ".join(f"{name} ({minutes_spoken(name)} min)"
-                              for name in ALL_VISIBLE_PARTICIPANTS)
-        
-        # Count transitions so that moderator knows which part of the discussion guide to deal with
-        transition_count = sum(
-                1 for msg in st.session_state.get("messages_full", []) 
-                if msg.get("content") == f"Moderator ({NAME_MODERATOR})_prompt_transition"
-                )
-        
-        
-        # === 2. Fill invisible moderator prompt ===
+                # Selected speaker has spoken
+                turn_completed = True
 
-        inv_filled = (
-            invisible_moderator["prompt"]
+    # --- AI participant turn ---
+    elif next_speaker in name_to_participant_key:
+        pdata_key = name_to_participant_key[next_speaker]
+        pdata = participants[pdata_key]
+
+        prompt_text = (
+            pdata["prompt"]
             .replace("{chat_history}", chat_history)
             .replace("{time_spent}", str(time_spent))
             .replace("{speaking_time}", speaking_time_str)
             .replace("{transition_count}", str(transition_count))
         )
 
-        # Debug: show invisible moderator prompt
-        if DEBUGGING == True:
-            st.subheader("🔍 Invisible Moderator Prompt")
-            st.code(inv_filled)
-
-
-        # === 3. Call invisible moderator model ===
+        if DEBUGGING:
+            st.subheader("🔍 AI Participant Prompt")
+            st.code(prompt_text)
 
         if api == "openai":
-            response = client.chat.completions.create(
+            response_ai = client.chat.completions.create(
                 model=MODEL,
-                messages=[{"role": "system", "content": inv_filled}],
-                temperature=TEMPERATURE_INV_MOD,
+                messages=[{"role": "user", "content": prompt_text}],
+                temperature=TEMPERATURE_AI_PART,
                 **token_params
             )
-            next_speaker = response.choices[0].message.content.strip()
-
-        elif api == "ollama":
-            response = requests.post(
+            ai_msg = response_ai.choices[0].message.content.strip()
+        else:
+            response_ai = requests.post(
                 url="http://localhost:11434/api/chat",
                 json={
                     "model": MODEL,
-                    "messages": [{"role": "system", "content": inv_filled}],
-                    "stream": False, # Note that there is no real option to use streaming here. If streaming is set to "True" the response is returned in chunks which the following code is not able to return. If you want to use streaming you have to adjust the code.
-                    "temperature": TEMPERATURE_INV_MOD,
+                    "messages": [{"role": "user", "content": prompt_text}],
+                    "stream": False,
+                    "temperature": TEMPERATURE_AI_PART,
                     "max_tokens": MAX_OUTPUT_TOKENS,
                 }
             )
-            data = response.json()
-            next_speaker = data["message"]["content"].strip()
+            ai_msg = response_ai.json()["message"]["content"].strip()
+        
+        # Debug: show AI participant output
+        if DEBUGGING == True:
+            st.subheader("📤 AI Participant Output")
+            st.code(response_ai)
+            st.code(ai_msg)
 
-        else:
-            st.error(f"Unknown API type: {api}")
+        # Display AI model output as chat message
+        with st.chat_message(ROLES[next_speaker]["display_role"], avatar=ROLES[next_speaker]["avatar"]):
+            st.markdown(f"**{next_speaker}:** {ai_msg}")
+
+        # Append message to log files
+        st.session_state.messages.append({"role": next_speaker, "content": ai_msg})
+        st.session_state.messages_full.append({"role": next_speaker, "content": ai_msg})
+
+        # Selected speaker has spoken
+        turn_completed = True
+
+    # --- Visible moderator turn ---
+    elif next_speaker.startswith(f"Moderator ({NAME_MODERATOR})"):
+        suffix = next_speaker.split("_", 1)[1]
+        prompt_text = visible_moderator.get(suffix)
+        if not prompt_text:
+            st.warning(f"Moderator prompt '{suffix}' not found.")
+            st.session_state.interview_active = False
             st.stop()
 
+        prompt_text = (
+            prompt_text
+            .replace("{chat_history}", chat_history)
+            .replace("{time_spent}", str(time_spent))
+            .replace("{speaking_time}", speaking_time_str)
+            .replace("{transition_count}", str(transition_count))
+        )
 
-        # Debug: show raw invisible moderator output
+        # Debug: show visible moderator prompt
         if DEBUGGING == True:
-            st.subheader("📤 Invisible Moderator Output")
-            st.code(response)
-            st.code(next_speaker)
+            st.subheader("🔍 Visible Moderator Prompt")
+            st.code(prompt_text)
 
-
-        # Store invisible moderator message in full log
-        st.session_state.messages_full.append({"role": "Invisible Moderator", "content": next_speaker})
-
+        if api == "openai":
+            response_vis = client.chat.completions.create(
+                model=MODEL,
+                messages=[{"role": "assistant", "content": prompt_text}],
+                temperature=TEMPERATURE_VIS_MOD,
+                **token_params
+            )
+            vis_msg = response_vis.choices[0].message.content.strip()
+        else:
+            response_vis = requests.post(
+                url="http://localhost:11434/api/chat",
+                json={
+                    "model": MODEL,
+                    "messages": [{"role": "assistant", "content": prompt_text}],
+                    "stream": False,
+                    "temperature": TEMPERATURE_VIS_MOD,
+                    "max_tokens": MAX_OUTPUT_TOKENS,
+                }
+            )
+            vis_msg = response_vis.json()["message"]["content"].strip()
         
-        # === 4. Handle turns ===
-
-        # --- Human turn ---
-        if HUMAN_ACTIVATION == True and next_speaker == "You":
-            user_msg = st.chat_input("Your message here")
-            if not user_msg:
-                st.stop()
-            st.session_state.messages.append({"role": "You", "content": user_msg})
-            st.session_state.messages_full.append({"role": "You", "content": user_msg})
-            with st.chat_message(ROLES["You"]["display_role"], avatar=ROLES["You"]["avatar"]):
-                st.markdown(f"**{next_speaker}:** {user_msg}")
-
-
-        # --- AI participant turn ---
-        elif next_speaker in name_to_participant_key:
-        # Update prompt of AI participant that is next_speaker
-            pdata_key = name_to_participant_key[next_speaker]
-            pdata = participants[pdata_key]
-            prompt_text = (
-                pdata["prompt"]
-                .replace("{chat_history}", chat_history)
-                .replace("{time_spent}", str(time_spent))
-                .replace("{speaking_time}", speaking_time_str)
-                .replace("{transition_count}", str(transition_count))
-            )
-
-            # Debug: show ai participant prompt
-            if DEBUGGING == True:
-                st.subheader("🔍 AI Participant Prompt")
-                st.code(prompt_text)
-
-            # Call AI model
-            if api == "openai":
-                response_ai = client.chat.completions.create(
-                    model=MODEL,
-                    messages=[{"role": "user", "content": prompt_text}],
-                    temperature=TEMPERATURE_AI_PART,
-                    **token_params
-                )
-                ai_msg = response_ai.choices[0].message.content.strip()
-
-            elif api == "ollama":
-                response_ai = requests.post(
-                    url="http://localhost:11434/api/chat",
-                    json={
-                        "model": MODEL,
-                        "messages": [{"role": "user", "content": prompt_text}],
-                        "stream": False, # Note that there is no real option to use streaming here. If streaming is set to "True" the response is returned in chunks which the following code is not able to return. If you want to use streaming you have to adjust the code.
-                        "temperature": TEMPERATURE_AI_PART,
-                        "max_tokens": MAX_OUTPUT_TOKENS,
-                    }
-                )
-                data_ai = response_ai.json()
-                ai_msg = data_ai["message"]["content"].strip()
-
-            # Debug: show AI participant output
-            if DEBUGGING == True:
-                st.subheader("📤 AI Participant Output")
-                st.code(response_ai)
-                st.code(ai_msg)
-
-            # Show AI model output in App as chat message
-            with st.chat_message(ROLES[next_speaker]["display_role"], avatar=ROLES[next_speaker]["avatar"]):
-                st.markdown(f"**{next_speaker}:** {ai_msg}")
-
-            # Store AI participant's message in log files
-            st.session_state.messages.append({"role": next_speaker, "content": ai_msg})
-            st.session_state.messages_full.append({"role": next_speaker, "content": ai_msg})
-
-
-        # --- Visible moderator turn ---
-        elif next_speaker.startswith(f"Moderator ({NAME_MODERATOR})"):
-
-            # Choose the right prompt
-            suffix = next_speaker.split("_", 1)[1]
-            prompt_text = visible_moderator.get(suffix)
-            if not prompt_text:
-                st.warning(f"Moderator prompt '{suffix}' not found.")
-                break
-            
-            # Update prompt
-            prompt_text = (
-                prompt_text
-                .replace("{chat_history}", chat_history)
-                .replace("{time_spent}", str(time_spent))
-                .replace("{speaking_time}", speaking_time_str)
-                .replace("{transition_count}", str(transition_count))
-            )
-
-            # Debug: show visible moderator prompt
-            if DEBUGGING == True:
-                st.subheader("🔍 Visible Moderator Prompt")
-                st.code(prompt_text)
-
-            # Call AI model
-            if api == "openai":
-                response_vis = client.chat.completions.create(
-                    model=MODEL,
-                    messages=[{"role": "assistant", "content": prompt_text}],
-                    temperature=TEMPERATURE_VIS_MOD,
-                    **token_params
-                )
-                vis_msg = response_vis.choices[0].message.content.strip()
-
-            elif api == "ollama":
-                response_vis = requests.post(
-                    url="http://localhost:11434/api/chat",
-                    json={
-                        "model": MODEL,
-                        "messages": [{"role": "assistant", "content": prompt_text}],
-                        "stream": False, # Note that there is no real option to use streaming here. If streaming is set to "True" the response is returned in chunks which the following code is not able to return. If you want to use streaming you have to adjust the code.
-                        "temperature": TEMPERATURE_VIS_MOD,
-                        "max_tokens": MAX_OUTPUT_TOKENS,
-                    }
-                )
-                data_vis = response_vis.json()
-                vis_msg = data_vis["message"]["content"].strip()
-
-            # Debug: show visible moderator output
-            if DEBUGGING == True:
+        if DEBUGGING == True:
                 st.subheader("📤 Visible Moderator Output")
                 st.code(response_vis)
                 st.code(vis_msg)
-            
-            ### Closing code check
-            # Conversation is not closed
-            if not any(
-                code in vis_msg for code in CLOSING_MESSAGES.keys()
-            ):
+
+        ### Closing code check
+        # Conversation is not closed
+        if not any(
+            code in vis_msg for code in CLOSING_MESSAGES.keys()
+        ):
+                   
+                # Display AI model output as chat message
+                with st.chat_message(ROLES["Moderator"]["display_role"], avatar=ROLES["Moderator"]["avatar"]):
+                    st.markdown(f"**Moderator({NAME_MODERATOR}):** {vis_msg}")
+
+                # Append message to log files
+                st.session_state.messages.append({"role": "Moderator", "content": vis_msg})
+                st.session_state.messages_full.append({"role": "Moderator", "content": vis_msg})
+
+                # Selected speaker has spoken
+                turn_completed = True
+
+        # Conversation is closed
+        for code, closing_text in CLOSING_MESSAGES.items():
+            if code in vis_msg:
+                st.session_state.interview_active = False
+
+                # Display chat message with closing text
+                with st.chat_message(ROLES["Moderator"]["display_role"], avatar=ROLES["Moderator"]["avatar"]):
+                     st.markdown(f"**Moderator({NAME_MODERATOR}):** {closing_text}")
                     
-                    # Display AI model output as chat message
-                    with st.chat_message(ROLES["Moderator"]["display_role"], avatar=ROLES["Moderator"]["avatar"]):
-                        st.markdown(f"**Moderator({NAME_MODERATOR}):** {vis_msg}")
+                # Append message to log files
+                st.session_state.messages.append({"role": "Moderator", "content": closing_text})
+                st.session_state.messages_full.append({"role": "Moderator", "content": closing_text})
 
-                        # Append message to log files
-                        st.session_state.messages.append({"role": "Moderator", "content": vis_msg})
-                        st.session_state.messages_full.append({"role": "Moderator", "content": vis_msg})
-
-                    # Save progress as backup, ignore errors.
-                    try:
-                        save_focusgroup_data(
-                        st.session_state.backups_paths["transcript"],
-                        st.session_state.backups_paths["transcript_full"],
-                        st.session_state.backups_paths["time"],
-                        )
-                    except:
-                        pass
-
-            # Conversation is closed
-            for code, closing_text in CLOSING_MESSAGES.items():
-                if code in vis_msg:
-                    st.session_state.interview_active = False
-
-                    # Display chat message with closing text
-                    with st.chat_message(ROLES["Moderator"]["display_role"], avatar=ROLES["Moderator"]["avatar"]):
-                        st.markdown(f"**Moderator({NAME_MODERATOR}):** {closing_text}")
+                # Selected speaker has spoken
+                turn_completed = True
                     
-                    # Append message to log files
-                    st.session_state.messages.append({"role": "Moderator", "content": closing_text})
-                    st.session_state.messages_full.append({"role": "Moderator", "content": closing_text})
-                    
-                    # Save final transcript and timing data, retry until successful.
-                    if st.session_state.username.strip().lower() == "testaccount":
+                # Save final transcript and timing data, retry until successful.
+                if st.session_state.username.strip().lower() == "testaccount":
+                    save_focusgroup_data(
+                        st.session_state.transcript_paths["transcript"],
+                        st.session_state.transcript_paths["transcript_full"],
+                        st.session_state.transcript_paths["time"],
+                    )
+                else: 
+                    final_transcript_stored = False
+                    while final_transcript_stored == False:
                         save_focusgroup_data(
                             st.session_state.transcript_paths["transcript"],
                             st.session_state.transcript_paths["transcript_full"],
                             st.session_state.transcript_paths["time"],
                         )
-                    else: 
-                        final_transcript_stored = False
-                        while final_transcript_stored == False:
-                            save_focusgroup_data(
-                                st.session_state.transcript_paths["transcript"],
-                                st.session_state.transcript_paths["transcript_full"],
-                                st.session_state.transcript_paths["time"],
-                            )
-                            final_transcript_stored = check_if_focusgroup_completed(
-                            TRANSCRIPTS_DIRECTORY, st.session_state.username
-                            )
-                    time.sleep(0.1)
-                    break
-                    
+                        final_transcript_stored = check_if_focusgroup_completed(
+                        TRANSCRIPTS_DIRECTORY, st.session_state.username
+                        )
 
+    # --- Fallback ---
+    else:
+        st.warning(f"Unknown next speaker: {next_speaker}")
 
+    # --- Backup save after any completed turn (except final closing) ---
+    if turn_completed:
+        try:
+            save_focusgroup_data(
+                st.session_state.backups_paths["transcript"],
+                st.session_state.backups_paths["transcript_full"],
+                st.session_state.backups_paths["time"],
+            )
+        except:
+            pass
+
+    # --- Continue next turn automatically ---
+    if turn_completed and st.session_state.interview_active:
+        st.rerun()

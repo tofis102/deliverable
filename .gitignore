@@ -13,15 +13,17 @@ venv/
 env/
 interviews/
 interviewsenv/
+Notebook_files/libs
+*Notebook.html
+*Notebook.pdf
 
 # --- Jupyter ---
 .ipynb_checkpoints/
 *.ipynb~
 
+
 # --- Quarto / RMarkdown ---
-*.html
-*.pdf
-*.docx
+apa.csl
 *.quarto_ipynb
 _cache/
 *.log
