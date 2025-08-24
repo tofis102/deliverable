@@ -13,9 +13,14 @@ venv/
 env/
 interviews/
 interviewsenv/
-Notebook_files/libs
+Notebook_files/
+
+Chopra_Haaland_2024/README.md
+
 *Notebook.html
 *Notebook.pdf
+
+apa.csl
 
 # --- Jupyter ---
 .ipynb_checkpoints/
@@ -23,7 +28,6 @@ Notebook_files/libs
 
 
 # --- Quarto / RMarkdown ---
-apa.csl
 *.quarto_ipynb
 _cache/
 *.log
